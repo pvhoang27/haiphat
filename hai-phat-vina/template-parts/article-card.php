@@ -1,0 +1,5 @@
+<?php defined('ABSPATH') || exit; $hpv_categories = get_the_category(); ?>
+<article class="article-card">
+    <a class="article-image" href="<?php the_permalink(); ?>" tabindex="-1" aria-hidden="true"><?php hpv_image(get_the_ID()); ?><?php if (hpv_is_illustration(get_the_ID())) : ?><span class="image-note">Ảnh minh họa</span><?php endif; ?></a>
+    <div class="article-info"><div class="article-meta"><?php if ($hpv_categories) : ?><a class="article-category" href="<?php echo esc_url(get_category_link($hpv_categories[0]->term_id)); ?>"><?php echo esc_html(hpv_category_label($hpv_categories[0])); ?></a><?php endif; ?><time datetime="<?php echo esc_attr(get_the_date('c')); ?>"><?php echo esc_html(get_the_date('d/m/Y')); ?></time><span><?php echo (int) hpv_reading_minutes(); ?> phút đọc</span></div><h3><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3><p><?php echo esc_html(wp_trim_words(get_the_excerpt(), 27)); ?></p><a class="text-link" href="<?php the_permalink(); ?>">Đọc bài viết <?php echo hpv_icon('arrow'); ?></a></div>
+</article>

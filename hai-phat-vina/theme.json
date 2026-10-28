@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schemas.wp.org/wp/6.4/theme.json",
+  "version": 2,
+  "settings": {
+    "appearanceTools": true,
+    "layout": {"contentSize": "780px", "wideSize": "1280px"},
+    "color": {
+      "palette": [
+        {"slug": "forest", "name": "Xanh Hải Phát", "color": "#163e35"},
+        {"slug": "leaf", "name": "Xanh lá", "color": "#2f6b54"},
+        {"slug": "sun", "name": "Vàng nắng", "color": "#f1c75b"},
+        {"slug": "mist", "name": "Nền xanh nhạt", "color": "#eff4ef"},
+        {"slug": "white", "name": "Trắng", "color": "#ffffff"}
+      ]
+    },
+    "typography": {
+      "fontFamilies": [{"fontFamily": "'Be Vietnam Pro',Arial,sans-serif", "slug": "be-vietnam-pro", "name": "Be Vietnam Pro"}],
+      "fontSizes": [
+        {"slug": "small", "name": "Nhỏ", "size": "13px"},
+        {"slug": "medium", "name": "Nội dung", "size": "17px"},
+        {"slug": "large", "name": "Giới thiệu", "size": "21px"},
+        {"slug": "x-large", "name": "Tiêu đề", "size": "32px"}
+      ]
+    }
+  },
+  "styles": {
+    "blocks": {
+      "core/quote": {"border": {"left": {"color": "#2f6b54", "style": "solid", "width": "3px"}}},
+      "core/group": {"spacing": {"blockGap": "20px"}},
+      "core/button": {"border": {"radius": "6px"}, "typography": {"fontSize": "14px", "fontWeight": "600"}}
+    }
+  }
+}

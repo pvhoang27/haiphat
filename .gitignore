@@ -1,0 +1,22 @@
+# Generated demo and install packages
+/HAI-PHAT-VINA-DEMO.html
+/*.zip
+
+# Local design and browser test artifacts
+/output/
+/.playwright-cli/
+/dev/checks/
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+wp-config.php
+*.sql
+*.log
+
+# Local machine metadata
+.DS_Store
+Thumbs.db
+/.aws/
+/.codex/

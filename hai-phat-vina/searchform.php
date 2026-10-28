@@ -1,0 +1,2 @@
+<?php defined('ABSPATH') || exit; $hpv_search_id = wp_unique_id('hpv-search-'); ?>
+<form role="search" method="get" class="search-form" action="<?php echo esc_url(home_url('/')); ?>"><label class="sr-only" for="<?php echo esc_attr($hpv_search_id); ?>">Tìm kiếm nội dung</label><input type="search" id="<?php echo esc_attr($hpv_search_id); ?>" name="s" value="<?php echo esc_attr(get_search_query()); ?>" placeholder="Bạn đang tìm sản phẩm nào?" required><button type="submit" class="button button--navy"><?php echo hpv_icon('search'); ?><span>Tìm kiếm</span></button></form>

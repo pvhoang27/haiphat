@@ -1,0 +1,15 @@
+<?php defined('ABSPATH') || exit; ?>
+</main>
+<footer class="site-footer">
+    <div class="container footer-top"><div><?php hpv_brand(); ?><p>Giải pháp mái che và bạt công trình.<br>Trao đổi đúng nhu cầu, lựa chọn đúng quy cách.</p></div><a class="footer-call" href="<?php echo esc_url(hpv_phone_url()); ?>"><small>Trao đổi trực tiếp cùng Hải Phát Vina</small><strong><?php echo esc_html(hpv_get('phone')); ?></strong></a></div>
+    <div class="container footer-grid">
+        <div class="footer-company"><h2><?php echo esc_html(hpv_get('legal_name')); ?></h2><p>Mã số thuế: <strong><?php echo esc_html(hpv_get('tax_id')); ?></strong></p><a class="footer-email" href="mailto:<?php echo esc_attr(hpv_get('email')); ?>"><?php echo esc_html(hpv_get('email')); ?></a><p><a href="<?php echo esc_url(hpv_zalo_url()); ?>" target="_blank" rel="noopener noreferrer">Liên hệ qua Zalo</a></p></div>
+        <div><h2>Sản phẩm & thông tin</h2><ul class="footer-links"><li><a href="<?php echo esc_url(hpv_products_url()); ?>">Danh mục sản phẩm</a></li><li><a href="<?php echo esc_url(hpv_page_url('quote')); ?>">Thông tin báo giá</a></li><li><a href="<?php echo esc_url(hpv_projects_url()); ?>">Gợi ý ứng dụng</a></li><li><a href="<?php echo esc_url(hpv_page_url('about')); ?>">Về Hải Phát Vina</a></li><li><a href="<?php echo esc_url(hpv_page_url('privacy')); ?>">Chính sách bảo mật</a></li></ul><?php if (has_nav_menu('footer')) { wp_nav_menu(array('theme_location' => 'footer', 'container' => false, 'menu_class' => 'footer-links', 'depth' => 1)); } ?></div>
+        <div class="footer-locations"><h2>Các cơ sở liên hệ</h2><div class="footer-location-grid"><?php for ($i = 1; $i <= 4; $i++) : ?><a href="<?php echo esc_url(hpv_map_url(hpv_get('address_' . $i))); ?>" target="_blank" rel="noopener noreferrer"><strong>Cơ sở <?php echo (int) $i; ?></strong><span><?php echo esc_html(hpv_get('address_' . $i)); ?></span></a><?php endfor; ?></div></div>
+    </div>
+    <div class="container bank-strip"><div><span>Thông tin chuyển khoản</span><strong><?php echo esc_html(hpv_get('bank_account')); ?></strong><button class="copy-account" type="button" data-copy="<?php echo esc_attr(hpv_get('bank_account')); ?>" aria-label="Sao chép số tài khoản"><?php echo hpv_icon('copy'); ?></button><span class="copy-status sr-only" role="status" aria-live="polite"></span></div><p><?php echo esc_html(hpv_get('bank_name')); ?></p><small>Vui lòng xác nhận nội dung thanh toán qua hotline trước khi chuyển khoản.</small></div>
+    <div class="container footer-bottom"><span>© <?php echo esc_html(wp_date('Y')); ?> <?php echo esc_html(hpv_get('brand')); ?>.</span><span>Thông tin quy cách và giá được xác nhận theo yêu cầu thực tế.</span></div>
+</footer>
+<div class="contact-dock" aria-label="Liên hệ nhanh"><a class="dock-zalo" href="<?php echo esc_url(hpv_zalo_url()); ?>" target="_blank" rel="noopener noreferrer"><?php echo hpv_icon('chat'); ?><span>Chat Zalo</span></a><a class="dock-phone" href="<?php echo esc_url(hpv_phone_url()); ?>"><?php echo hpv_icon('phone'); ?><span><?php echo esc_html(hpv_get('phone')); ?></span></a></div>
+<?php wp_footer(); ?>
+</body></html>
