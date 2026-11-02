@@ -11,7 +11,7 @@ function hpv_sanitize_settings($input) {
     $result = array();
     foreach (hpv_defaults() as $key => $default) {
         $value = isset($input[$key]) && is_scalar($input[$key]) ? $input[$key] : $default;
-        if (in_array($key, array('hero_image', 'about_image'), true)) { $result[$key] = absint($value); }
+        if (in_array($key, array('hero_image', 'about_image', 'bank_qr'), true)) { $result[$key] = absint($value); }
         elseif (in_array($key, array('email', 'recipient'), true)) { $result[$key] = sanitize_email($value); }
         elseif (in_array($key, array('description', 'hero_text', 'hero_title'), true)) { $result[$key] = sanitize_textarea_field($value); }
         elseif ($key === 'zalo') { $result[$key] = preg_replace('/\D/', '', $value); }
@@ -99,6 +99,12 @@ function hpv_settings_page() {
                 <?php endforeach; ?>
                 </div>
                 <p>Đổi logo tại <a href="<?php echo esc_url(admin_url('customize.php?autofocus[section]=title_tagline')); ?>">Giao diện → Tùy biến → Nhận diện website</a>. Logo ban đầu là nhận diện chữ và biểu tượng có sẵn trong theme.</p>
+            </section>
+            <section class="hpv-admin-panel">
+                <h2>Thông tin chuyển khoản</h2>
+                <div class="hpv-setting-grid">
+                    <div class="hpv-setting-field"><label>Ảnh QR ngân hàng</label><input type="hidden" id="hpv-image-bank_qr" name="hpv_settings[bank_qr]" value="<?php echo esc_attr(hpv_get('bank_qr')); ?>"><div class="hpv-image-preview" id="hpv-preview-bank_qr"><?php if (hpv_get('bank_qr')) { echo wp_get_attachment_image(hpv_get('bank_qr'), 'medium'); } ?></div><p><button type="button" class="button hpv-choose-image" data-image-key="bank_qr">Chọn ảnh QR từ thư viện</button> <button type="button" class="button hpv-clear-image" data-image-key="bank_qr">Xóa ảnh QR</button></p><p class="description">Dùng ảnh QR gốc từ ngân hàng và quét thử trước khi công khai. Số tài khoản, ngân hàng được lấy từ phần Thông tin công ty phía trên.</p></div>
+                </div>
             </section>
             <?php submit_button('Lưu thông tin website'); ?>
         </form>

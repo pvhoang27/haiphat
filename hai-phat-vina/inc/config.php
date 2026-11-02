@@ -22,6 +22,7 @@ function hpv_defaults() {
         'description' => 'Hải Phát Vina — thông tin sản phẩm mái xếp, mái hiên, bạt nhựa, bạt HDPE và dù che ngoài trời. Liên hệ 0868.201.868 để trao đổi quy cách và nhận báo giá.',
         'hero_image' => 0,
         'about_image' => 0,
+        'bank_qr' => 0,
     );
 }
 
