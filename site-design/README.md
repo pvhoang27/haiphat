@@ -9,7 +9,7 @@
 
 Không xuất Bài viết, Sản phẩm, Công trình, yêu cầu khách, tài khoản, mật khẩu, post meta, cấu hình công ty hoặc file ảnh. Nội dung Trang công khai (kể cả chữ và URL/ID ảnh trong bố cục) có trong bản xuất. Đổi ảnh trong bố cục có thể tạo diff đường dẫn; chỉ tải ảnh lên Thư viện hoặc thêm Bài viết thì không tạo diff.
 
-Lịch chạy dự kiến mỗi 15 phút, có thể trễ do GitHub. Workflow dùng một nhánh `automation/wordpress-design` và một PR đang mở để gom thay đổi. Không thay đổi thì không tạo commit. PR không tự merge. Nút Run workflow cho phép chạy ngay.
+Lịch chạy dự kiến mỗi 15 phút, có thể trễ do GitHub. Workflow dùng một nhánh `automation/wordpress-design` và một PR đang mở để gom thay đổi. Mỗi commit và tiêu đề PR ghi thời điểm đồng bộ đến giây theo giờ Việt Nam (`YYYY-MM-DD HH:MM:SS ICT`). Không thay đổi thì không tạo commit hoặc đổi tiêu đề PR. PR không tự merge. Nút Run workflow cho phép chạy ngay.
 
 Đây là **bản nguồn thiết kế để review và lưu lịch sử**, không tự ghi ngược vào database. Merge PR không thay đổi website: khách đã lưu thay đổi đó trên website trước rồi. Deploy tiếp tục giữ nội dung khách chỉnh, tránh vòng lặp đồng bộ và ghi đè sửa đổi mới hơn.
 

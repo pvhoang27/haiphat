@@ -3,6 +3,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 hpv_export_file="${1:?Validated SSH export file required}"
 hpv_branch=automation/wordpress-design
+hpv_sync_time="$(TZ=Asia/Ho_Chi_Minh date '+%Y-%m-%d %H:%M:%S ICT')"
+hpv_pr_title="Sync WordPress design: $hpv_sync_time"
 git config user.name 'github-actions[bot]'
 git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
 git fetch origin main
@@ -24,13 +26,14 @@ if git diff --cached --quiet; then
   # Retry PR creation if a previous push succeeded but the API call failed.
   if git diff --quiet origin/main -- site-design/current; then exit 0; fi
 else
-  git commit -m 'Sync published WordPress design sources'
+  git commit -m "$hpv_pr_title"
   # A normal push refuses concurrent/foreign branch changes instead of overwriting.
   git push --set-upstream origin "$hpv_branch"
 fi
 hpv_pr="$(gh pr list --state open --base main --head "$hpv_branch" --json number --jq '.[0].number // empty')"
 if [ -z "$hpv_pr" ]; then
-  gh pr create --base main --head "$hpv_branch" --title 'Sync published WordPress design' --body-file .github/design-sync-pr.md
+  gh pr create --base main --head "$hpv_branch" --title "$hpv_pr_title" --body-file .github/design-sync-pr.md
 else
+  gh pr edit "$hpv_pr" --title "$hpv_pr_title"
   printf 'Updated design PR #%s\n' "$hpv_pr"
 fi
