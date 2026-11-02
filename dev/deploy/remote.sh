@@ -10,7 +10,7 @@ hpv_backup_root="$(php "$hpv_script" backup-root "$hpv_wp_root" "$hpv_revision")
 mkdir -p "$hpv_backup_root"
 chmod 700 "$hpv_backup_root"
 exec 9>"$hpv_backup_root/deploy.lock"
-flock -n 9
+flock -w 60 9
 if php "$hpv_script" current "$hpv_wp_root" "$hpv_revision" "$hpv_backup_root"; then
   php "$hpv_script" health "$hpv_wp_root" "$hpv_revision" "$hpv_backup_root"
   exit 0

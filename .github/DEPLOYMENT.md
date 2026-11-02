@@ -37,7 +37,7 @@ File Word cho người dùng nằm ngoài repo. README trong repo chỉ dành ch
 
 `.github/workflows/sync-design.yml` chạy ở phút 7/22/37/52 mỗi giờ, hoặc Run workflow trên `main`. Lịch GitHub có thể trễ; repository public không hoạt động trong thời gian dài cũng có thể bị GitHub tắt lịch, cần kiểm tra trạng thái workflow khi bảo trì.
 
-Workflow dùng cùng environment/secrets SSH và cùng concurrency group với deploy. Nó chạy CLI xuất nguồn qua stdin, không tạo endpoint web hoặc đặt GitHub token trên hosting. Chỉ đọc thiết kế đã công khai, xác thực đường dẫn/metadata rồi cập nhật `site-design/current/` qua nhánh riêng. Nhánh này dành cho tự động hóa; chỉnh code trên nhánh khác. Không có force-push, auto-approve hoặc auto-merge.
+Workflow dùng cùng environment/secrets SSH với deploy và giữ shared lock trên server trong lúc xuất, tránh đọc giữa một lần migration. Concurrency group riêng tránh lịch đồng bộ hủy một deploy đang chờ. Nó chạy CLI xuất nguồn qua stdin, không tạo endpoint web hoặc đặt GitHub token trên hosting. Chỉ đọc thiết kế đã công khai, xác thực đường dẫn/metadata rồi cập nhật `site-design/current/` qua nhánh riêng. Nhánh này dành cho tự động hóa; chỉnh code trên nhánh khác. Không có force-push, auto-approve hoặc auto-merge.
 
 Trong Settings → Actions → General cần bật **Allow GitHub Actions to create and approve pull requests** để token Actions tạo PR. Quyền mặc định vẫn `read`; chỉ workflow đồng bộ xin `contents: write` và `pull-requests: write`. GitHub gom tạo và duyệt PR trong cùng một setting, nhưng workflow này không duyệt PR. PR do bot tạo có thể cần người có quyền write bấm Approve workflows to run để chạy bộ kiểm thử PR; bản xuất luôn được validator kiểm tra ngay trong workflow đồng bộ. Merge vào `main` vẫn chạy CI đầy đủ trước deploy.
 

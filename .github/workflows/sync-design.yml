@@ -5,9 +5,10 @@ on:
     - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
 
-# Share the production deployment lock: never export during a code/DB migration.
+# Keep sync scheduling from replacing a pending production deploy. The CLI also
+# holds the server's shared deploy lock while reading the design.
 concurrency:
-  group: hai-phat-vina-production
+  group: hai-phat-vina-design-sync
   cancel-in-progress: false
 
 permissions:
