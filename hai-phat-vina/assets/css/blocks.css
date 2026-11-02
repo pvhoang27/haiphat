@@ -313,6 +313,25 @@
   .wp-site-blocks .hpv-contact-dock { left: 0; right: 0; bottom: 0; padding: 9px 12px calc(9px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: 1fr 1.35fr; background: #fff; box-shadow: 0 -2px 18px #163e3512; }
   .wp-site-blocks .hpv-contact-dock a { min-height: 44px; padding: 10px; box-shadow: none; }
 }
+
+/* The branch list stays visible; each map expands only on request. */
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-footer-grid .hpv-company-info--footer-branches { margin-top: 16px; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-footer-grid .hpv-company-info--footer-branches .hpv-branches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-footer-grid .hpv-company-info--footer-branches .hpv-branch { min-width: 0; border-bottom: 1px solid #537467; padding-bottom: 9px; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-footer-grid .hpv-company-info--footer-branches .hpv-branch:has(details[open]) { grid-column: 1 / -1; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-footer-grid .hpv-company-info--footer-branches .hpv-branch > strong { color: #f1d884; margin: 0 0 2px; font-size: 12px; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-footer-grid .hpv-company-info--footer-branches .hpv-branch p { margin: 0; line-height: 1.55; overflow-wrap: anywhere; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-branch-actions { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 12px; font-size: 12px; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-branch-actions a, :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-branch-map summary { font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-branch-map { max-width: 100%; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-branch-map[open] { flex-basis: 100%; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-branch-map summary { cursor: pointer; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-branch-map iframe { display: block; width: 100%; height: 210px; margin-block: 8px; border: 0; border-radius: 4px; background: #eaf1e7; }
+
+/* Recognisable Zalo mark and permanently visible contact labels. */
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-zalo-mark { display: inline-grid; place-items: center; width: 30px; height: 30px; flex: 0 0 30px; border-radius: 8px; background: #0068ff; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-zalo-mark img { display: block; width: 24px; height: 24px; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-zalo-action { display: inline-flex; align-items: center; gap: 9px; }
 @media (prefers-reduced-motion: reduce) {
   :where(.wp-site-blocks, .editor-styles-wrapper) * { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }
@@ -370,14 +389,14 @@ body.page .hpv-full-width-page:has(.hpv-contact-page) .hpv-full-width-title h1 {
 :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-site-footer { padding-block: 42px 24px; }
 :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-footer-grid { padding-block: 16px 32px; }
 
-/* Circular contact actions on desktop, labelled touch targets on mobile. */
+/* Contact actions remain labelled and visible at all times. */
 .wp-site-blocks .hpv-contact-dock { align-items: flex-end; right: 18px; bottom: 22px; }
-.wp-site-blocks .hpv-contact-dock a { width: 46px; height: 46px; min-height: 46px; padding: 10px; border-radius: 50%; position: relative; }
-.wp-site-blocks .hpv-contact-dock a:first-child { background: #17634a; color: #fff; }
+.wp-site-blocks .hpv-contact-dock a { width: auto; min-width: 168px; height: auto; min-height: 46px; padding: 8px 12px; border-radius: 8px; position: relative; gap: 9px; justify-content: flex-start; }
+.wp-site-blocks .hpv-contact-dock a:first-child { background: #0068ff; color: #fff; }
 .wp-site-blocks .hpv-contact-dock a:last-child { background: #f1c75b; color: #163e35; }
 .wp-site-blocks .hpv-contact-dock svg, .editor-styles-wrapper .hpv-contact-dock svg { width: 21px; height: 21px; flex: none; }
-.wp-site-blocks .hpv-contact-dock a > span { position: absolute; right: 56px; padding: 8px 12px; border-radius: 5px; background: inherit; color: inherit; white-space: nowrap; opacity: 0; pointer-events: none; }
-.wp-site-blocks .hpv-contact-dock a:hover > span, .wp-site-blocks .hpv-contact-dock a:focus-visible > span { opacity: 1; }
+.wp-site-blocks .hpv-contact-dock a > span { position: static; padding: 0; color: inherit; white-space: nowrap; opacity: 1; pointer-events: auto; }
+.wp-site-blocks .hpv-contact-dock .hpv-zalo-mark { background: transparent; border: 1px solid #fff9; }
 .editor-styles-wrapper .hpv-contact-dock a { display: inline-flex; align-items: center; gap: 8px; }
 @media (max-width: 960px) {
   :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-locations-section .hpv-branches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -392,6 +411,6 @@ body.page .hpv-full-width-page:has(.hpv-contact-page) .hpv-full-width-title h1 {
   :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-contact-page .hpv-form-panel { padding: 24px 19px; }
   :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-locations-section .hpv-branches { grid-template-columns: 1fr; gap: 22px; }
   .wp-site-blocks .hpv-contact-dock { align-items: stretch; }
-  .wp-site-blocks .hpv-contact-dock a { width: auto; height: auto; min-height: 44px; border-radius: 5px; gap: 9px; padding: 10px; }
+  .wp-site-blocks .hpv-contact-dock a { width: auto; min-width: 0; height: auto; min-height: 44px; border-radius: 5px; gap: 9px; padding: 10px; justify-content: center; }
   .wp-site-blocks .hpv-contact-dock a > span { position: static; padding: 0; opacity: 1; pointer-events: auto; }
 }

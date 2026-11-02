@@ -59,6 +59,15 @@ try {
     hpv_structure_assert(strpos($compact_footer, 'Liên kết khách tự thêm') !== false && strpos($compact_footer, '"layout":"branches"') === false && strpos($compact_footer, 'Xem danh sách chi nhánh') !== false, 'Compact footer removes only branch list and keeps client links');
     hpv_structure_assert(get_option('hpv_compact_footer_backup_v1')['content'] === $with_branches, 'Previous footer source saved before compacting');
     hpv_structure_assert(hpv_compact_customer_footer() === true && get_post_field('post_content', $saved['footer']) === $compact_footer, 'Repeated deployments do not rewrite customer footer');
+    // Simulate the previously deployed compact footer and a customer-added link.
+    $without_branches = str_replace('<!-- wp:hpv/company-info {"layout":"footer-branches"} /-->', '', $compact_footer);
+    wp_update_post(wp_slash(array('ID' => $saved['footer'], 'post_content' => $without_branches)));
+    $restored = hpv_restore_customer_footer_branches();
+    if (is_wp_error($restored)) { throw new RuntimeException($restored->get_error_message()); }
+    $restored_footer = get_post_field('post_content', $saved['footer']);
+    hpv_structure_assert(strpos($restored_footer, '"layout":"footer-branches"') !== false && strpos($restored_footer, 'Liên kết khách tự thêm') !== false, 'Branch list restored without overwriting other footer edits');
+    hpv_structure_assert(get_option('hpv_footer_branches_backup_v1')['content'] === $without_branches, 'Footer saved before adding the branch block');
+    hpv_structure_assert(hpv_restore_customer_footer_branches() === true && get_post_field('post_content', $saved['footer']) === $restored_footer, 'Repeated deployments preserve restored footer');
     $editable = $saved['pages']['bat-xay-dung'];
     wp_update_post(wp_slash(array('ID' => $editable, 'post_content' => '<!-- wp:paragraph --><p>Nội dung khách tự viết.</p><!-- /wp:paragraph -->')));
     $new_header = $header->content . '<!-- wp:paragraph --><p>Khách chỉnh đầu trang.</p><!-- /wp:paragraph -->';

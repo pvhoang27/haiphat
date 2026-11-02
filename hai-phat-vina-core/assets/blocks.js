@@ -4,7 +4,7 @@
   var Fragment = wp.element.Fragment;
   var ServerSideRender = wp.serverSideRender.default || wp.serverSideRender;
   var specs = {
-    'company-info': { title: 'Thông tin công ty', icon: 'building', description: 'Thông tin dùng chung. Sửa một lần ở Thông tin công ty để cập nhật mọi nơi.', attributes: { layout: { type: 'string', default: 'contact', enum: ['contact', 'footer', 'branches', 'bank', 'phone'] } } },
+    'company-info': { title: 'Thông tin công ty', icon: 'building', description: 'Thông tin dùng chung. Sửa một lần ở Thông tin công ty để cập nhật mọi nơi.', attributes: { layout: { type: 'string', default: 'contact', enum: ['contact', 'footer', 'branches', 'footer-branches', 'bank', 'phone'] } } },
     'quote-form': { title: 'Form yêu cầu báo giá', icon: 'email', description: 'Nhận yêu cầu và lưu riêng tư trong mục Yêu cầu báo giá.', attributes: { variant: { type: 'string', default: 'compact' }, needs: { type: 'array', items: { type: 'string' } } } },
     'product-price': { title: 'Giá sản phẩm', icon: 'tag', description: 'Lấy giá từ Thông tin sản phẩm.', usesContext: ['postId', 'postType'] },
     'product-specs': { title: 'Quy cách sản phẩm', icon: 'list-view', description: 'Lấy quy cách, ứng dụng và bảo hành từ Thông tin sản phẩm.', usesContext: ['postId', 'postType'] },

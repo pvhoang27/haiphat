@@ -12,6 +12,13 @@ hpv_edit_assert(strpos($form, 'Tên khách') !== false && strpos($form, 'Nhận 
 hpv_edit_assert(strpos($form, 'name="hpv_consent"') !== false && strpos($form, 'name="hpv_nonce"') !== false && strpos($form, 'name="hpv_phone"') !== false, 'Editable form copy preserves required server fields and protection');
 $dock = do_blocks('<!-- wp:hpv/floating-contact {"labels":{"zaloLabel":"Nhắn tư vấn","phoneLabel":"Hotline {phone}"}} /-->');
 hpv_edit_assert(strpos($dock, 'Nhắn tư vấn') !== false && strpos($dock, 'Hotline ' . hpv_get('phone')) !== false, 'Floating contact labels editable without losing phone linkage');
+hpv_edit_assert(strpos($dock, 'assets/zalo.svg') !== false && strpos($dock, '<span>Hotline ') !== false, 'Contact actions include recognisable Zalo mark and persistent hotline label');
+$contact = do_blocks('<!-- wp:hpv/company-info {"layout":"contact"} /-->');
+hpv_edit_assert(strpos($contact, 'assets/zalo.svg') !== false && strpos($contact, 'Nhắn tin qua Zalo') !== false, 'Company contact clearly labels its Zalo link');
+$branches = do_blocks('<!-- wp:hpv/company-info {"layout":"footer-branches"} /-->');
+hpv_edit_assert(substr_count($branches, 'class="hpv-branch"') === 4 && substr_count($branches, '<iframe ') === 4 && strpos($branches, 'www.google.com/maps?q=') !== false, 'Four editable addresses include expandable Google maps');
+hpv_edit_assert(hpv_map_embed_url('<iframe src="https://www.google.com/maps/embed?pb=abc&amp;hl=vi"></iframe>') === 'https://www.google.com/maps/embed?pb=abc&hl=vi', 'Pasted Google Maps iframe accepted');
+hpv_edit_assert(hpv_map_embed_url('https://www.google.com.evil.test/maps/embed?pb=bad') === '' && hpv_map_embed_url('javascript:alert(1)') === '', 'Unsafe map embeds rejected');
 $phone = do_blocks('<!-- wp:hpv/company-info {"layout":"phone","labels":{"phoneCaption":"Liên hệ kinh doanh"}} /-->');
 hpv_edit_assert(strpos($phone, 'Liên hệ kinh doanh') !== false, 'Shared contact block copy editable');
 $default = do_blocks('<!-- wp:hpv/company-info {"layout":"phone"} /-->');

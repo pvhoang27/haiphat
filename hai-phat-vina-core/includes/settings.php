@@ -20,6 +20,7 @@ function hpv_defaults() {
         'address_2' => 'Nguyễn Ảnh Thủ, quận 12, Hồ Chí Minh',
         'address_3' => 'Thuận Giao, Thành Phố Thuận An, Bình Dương',
         'address_4' => 'Lộc Hoà, Thành phố Nam Định',
+        'map_embed_1' => '', 'map_embed_2' => '', 'map_embed_3' => '', 'map_embed_4' => '',
         'bank_account' => '9868201868',
         'bank_name' => 'Ngân hàng Quân đội - chi nhánh Tân Mai',
         'hero_title' => "Che nắng mưa.\nMở rộng không gian.",
@@ -41,6 +42,15 @@ function hpv_get($key) {
 function hpv_phone_url() { return 'tel:' . preg_replace('/[^0-9+]/', '', hpv_get('phone')); }
 function hpv_zalo_url() { return 'https://zalo.me/' . preg_replace('/\D/', '', hpv_get('zalo')); }
 function hpv_map_url($address) { return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($address); }
+/** Accept Google Maps' own embed URL, or an iframe copied from its Share dialog. */
+function hpv_map_embed_url($input) {
+    if (!is_string($input)) { return ''; }
+    if (preg_match('~<iframe\b[^>]*\bsrc\s*=\s*(["\'])(.*?)\1~is', $input, $match)) { $input = html_entity_decode($match[2], ENT_QUOTES, 'UTF-8'); }
+    $url = esc_url_raw(trim($input), array('https'));
+    $parts = wp_parse_url($url);
+    if (!$parts || !isset($parts['scheme'], $parts['host'], $parts['path']) || strtolower($parts['scheme']) !== 'https' || !in_array(strtolower($parts['host']), array('www.google.com', 'google.com'), true) || !preg_match('~^/maps/embed(?:/v1/(?:place|search|view))?/?$~', $parts['path']) || isset($parts['user']) || isset($parts['pass']) || (isset($parts['port']) && (int) $parts['port'] !== 443)) { return ''; }
+    return $url;
+}
 function hpv_page_url($key) {
     $ids = get_option('hpv_page_ids', array());
     if (is_array($ids) && !empty($ids[$key]) && get_post_status(absint($ids[$key])) === 'publish') { return get_permalink(absint($ids[$key])); }
@@ -67,6 +77,9 @@ function hpv_sanitize_settings($input) {
             $result[$key] = sanitize_email($value);
         } elseif (in_array($key, array('description', 'hero_text', 'hero_title'), true)) {
             $result[$key] = sanitize_textarea_field($value);
+        } elseif (strpos($key, 'map_embed_') === 0) {
+            $result[$key] = hpv_map_embed_url((string) $value);
+            if ($value !== '' && $result[$key] === '') { $result[$key] = hpv_get($key); add_settings_error('hpv_settings', $key, 'Bản đồ chưa hợp lệ. Hãy dùng mã nhúng từ Google Maps; hệ thống đã giữ liên kết cũ.'); }
         } elseif ($key === 'zalo') {
             $result[$key] = preg_replace('/\D/', '', $value);
         } else {

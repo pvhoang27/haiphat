@@ -7,7 +7,7 @@ function hpv_register_business_blocks() {
     wp_register_script('hpv-business-blocks', $base . 'assets/blocks.js', array('wp-blocks', 'wp-element', 'wp-components', 'wp-block-editor', 'wp-server-side-render', 'wp-i18n'), HPV_CORE_VERSION, true);
     wp_localize_script('hpv-business-blocks', 'hpvBlockEditor', array('settingsUrl' => admin_url('admin.php?page=hpv-company')));
     $definitions = array(
-        'company-info' => array('title' => 'Thông tin công ty', 'attributes' => array('layout' => array('type' => 'string', 'default' => 'contact', 'enum' => array('contact', 'footer', 'branches', 'bank', 'phone')))),
+        'company-info' => array('title' => 'Thông tin công ty', 'attributes' => array('layout' => array('type' => 'string', 'default' => 'contact', 'enum' => array('contact', 'footer', 'branches', 'footer-branches', 'bank', 'phone')))),
         'quote-form' => array('title' => 'Form yêu cầu báo giá', 'attributes' => array('variant' => array('type' => 'string', 'default' => 'compact'), 'needs' => array('type' => 'array', 'items' => array('type' => 'string')))),
         'product-price' => array('title' => 'Giá sản phẩm', 'uses_context' => array('postId', 'postType')),
         'product-specs' => array('title' => 'Quy cách sản phẩm', 'uses_context' => array('postId', 'postType')),
@@ -35,6 +35,11 @@ function hpv_block_label($attributes, $key, $fallback) {
     return isset($labels[$key]) && is_string($labels[$key]) && trim($labels[$key]) !== '' ? sanitize_text_field($labels[$key]) : $fallback;
 }
 
+/** Simple Icons Zalo wordmark (CC0 icon artwork; brand rights remain with Zalo). */
+function hpv_zalo_mark() {
+    return '<span class="hpv-zalo-mark" aria-hidden="true"><img src="' . esc_url(HPV_CORE_URL . 'assets/zalo.svg') . '" alt="" width="24" height="24"></span>';
+}
+
 function hpv_business_block_categories($categories) {
     array_unshift($categories, array('slug' => 'hai-phat-vina-business', 'title' => 'Hải Phát Vina — chức năng'));
     return $categories;
@@ -49,10 +54,10 @@ function hpv_render_company_info($attributes) {
     <div <?php echo $wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core escapes wrapper attributes. ?>>
     <?php if ($layout === 'phone') : ?>
         <a href="<?php echo esc_url(hpv_phone_url()); ?>"><small><?php echo esc_html(hpv_block_label($attributes, 'phoneCaption', 'Tư vấn & báo giá')); ?></small><strong><?php echo esc_html(hpv_get('phone')); ?></strong></a>
-    <?php elseif ($layout === 'branches') : ?>
+    <?php elseif ($layout === 'branches' || $layout === 'footer-branches') : ?>
         <div class="hpv-branches">
         <?php for ($i = 1; $i <= 4; $i++) : $address = hpv_get('address_' . $i); if (!$address) { continue; } ?>
-            <div class="hpv-branch"><strong><?php echo esc_html(hpv_block_label($attributes, 'branchPrefix', 'Cơ sở')) . ' ' . (int) $i; ?></strong><p><?php echo esc_html($address); ?></p><a href="<?php echo esc_url(hpv_map_url($address)); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html(hpv_block_label($attributes, 'directionsLabel', 'Xem đường đi')); ?><span class="screen-reader-text"> đến cơ sở <?php echo (int) $i; ?> (mở tab mới)</span></a></div>
+            <div class="hpv-branch"><strong><?php echo esc_html(hpv_block_label($attributes, 'branchPrefix', 'Cơ sở')) . ' ' . (int) $i; ?></strong><p><?php echo esc_html($address); ?></p><div class="hpv-branch-actions"><details class="hpv-branch-map"><summary>Xem bản đồ</summary><?php $map = hpv_map_embed_url((string) hpv_get('map_embed_' . $i)); if (!$map) { $map = 'https://www.google.com/maps?q=' . rawurlencode($address) . '&output=embed'; } ?><iframe src="<?php echo esc_url($map); ?>" title="<?php echo esc_attr('Bản đồ Google Maps cơ sở ' . $i); ?>" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></details><a href="<?php echo esc_url(hpv_map_url($address)); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html(hpv_block_label($attributes, 'directionsLabel', 'Google Maps')); ?><span class="screen-reader-text"> cơ sở <?php echo (int) $i; ?> (mở tab mới)</span></a></div></div>
         <?php endfor; ?>
         </div>
     <?php elseif ($layout === 'bank') : ?>
@@ -69,7 +74,8 @@ function hpv_render_company_info($attributes) {
             <div><dt><?php echo esc_html(hpv_block_label($attributes, 'taxLabel', 'Mã số thuế')); ?></dt><dd><?php echo esc_html(hpv_get('tax_id')); ?></dd></div>
             <div><dt><?php echo esc_html(hpv_block_label($attributes, 'hotlineLabel', 'Hotline')); ?></dt><dd><a href="<?php echo esc_url(hpv_phone_url()); ?>"><?php echo esc_html(hpv_get('phone')); ?></a></dd></div>
             <div><dt><?php echo esc_html(hpv_block_label($attributes, 'emailLabel', 'Email')); ?></dt><dd><a href="<?php echo esc_url('mailto:' . hpv_get('email')); ?>"><?php echo esc_html(hpv_get('email')); ?></a></dd></div>
-            <div><dt>Zalo</dt><dd><a href="<?php echo esc_url(hpv_zalo_url()); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html(hpv_block_label($attributes, 'zaloLabel', 'Nhắn tin tư vấn')); ?></a></dd></div>
+            <?php $zalo_label = hpv_block_label($attributes, 'zaloLabel', 'Nhắn tin qua Zalo'); if (stripos($zalo_label, 'zalo') === false) { $zalo_label .= ' Zalo'; } ?>
+            <div><dt>Zalo</dt><dd><a class="hpv-zalo-action" href="<?php echo esc_url(hpv_zalo_url()); ?>" target="_blank" rel="noopener noreferrer"><?php echo hpv_zalo_mark(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted inline icon. ?><span><?php echo esc_html($zalo_label); ?></span></a></dd></div>
         </dl>
     <?php endif; ?>
     </div>
@@ -111,10 +117,9 @@ function hpv_render_product_specs($attributes, $content, $block) {
 }
 
 function hpv_render_floating_contact($attributes) {
-    $phone_label = str_replace('{phone}', hpv_get('phone'), hpv_block_label($attributes, 'phoneLabel', 'Gọi {phone}'));
-    $chat_icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.8 7.5 8 8 0 0 1-3.1-.7L4 20l1.5-4.2A7.5 7.5 0 1 1 20 11.5Z"/><path d="M8.5 11.5h7"/></svg>';
+    $phone_label = str_replace('{phone}', hpv_get('phone'), hpv_block_label($attributes, 'phoneLabel', 'Hotline {phone}'));
     $phone_icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 3.5 9 3l2 4.4-1.7 1.5a14 14 0 0 0 5.8 5.8l1.5-1.7 4.4 2-.5 2.4a2.5 2.5 0 0 1-2.6 2C10.7 18.7 5.3 13.3 4.6 6.1a2.5 2.5 0 0 1 2-2.6Z"/></svg>';
-    return '<nav ' . get_block_wrapper_attributes(array('class' => 'hpv-contact-dock')) . ' aria-label="Liên hệ nhanh"><a href="' . esc_url(hpv_zalo_url()) . '" target="_blank" rel="noopener noreferrer">' . $chat_icon . '<span>' . esc_html(hpv_block_label($attributes, 'zaloLabel', 'Chat Zalo')) . '</span></a><a href="' . esc_url(hpv_phone_url()) . '">' . $phone_icon . '<span>' . esc_html($phone_label) . '</span></a></nav>';
+    return '<nav ' . get_block_wrapper_attributes(array('class' => 'hpv-contact-dock')) . ' aria-label="Liên hệ nhanh"><a href="' . esc_url(hpv_zalo_url()) . '" target="_blank" rel="noopener noreferrer">' . hpv_zalo_mark() . '<span>' . esc_html(hpv_block_label($attributes, 'zaloLabel', 'Zalo')) . '</span></a><a href="' . esc_url(hpv_phone_url()) . '">' . $phone_icon . '<span>' . esc_html($phone_label) . '</span></a></nav>';
 }
 
 function hpv_render_article_toc($attributes) {

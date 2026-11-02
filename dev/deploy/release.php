@@ -175,6 +175,13 @@ try {
             $compacted = hpv_compact_customer_footer();
             if (is_wp_error($compacted)) { throw new RuntimeException($compacted->get_error_message()); }
         }
+        if (!get_option('hpv_footer_branches_v1')) {
+            $admins = get_users(array('role' => 'administrator', 'number' => 1, 'fields' => 'ID'));
+            if (!$admins) { throw new RuntimeException('No administrator exists to adjust the footer.'); }
+            wp_set_current_user($admins[0]);
+            $restored = hpv_restore_customer_footer_branches();
+            if (is_wp_error($restored)) { throw new RuntimeException($restored->get_error_message()); }
+        }
         update_option('hpv_deployed_revision', $revision, false);
         wp_clean_themes_cache(true);
         flush_rewrite_rules();

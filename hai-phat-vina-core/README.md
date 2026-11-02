@@ -1,5 +1,7 @@
 # Hải Phát Vina Core
 
+Biểu tượng chữ Zalo trong `assets/zalo.svg` lấy từ [Simple Icons](https://github.com/simple-icons/simple-icons/blob/develop/icons/zalo.svg), mã SVG CC0; nhãn hiệu thuộc chủ sở hữu tương ứng.
+
 Plugin nghiệp vụ đi kèm theme Hải Phát Vina. Cài và kích hoạt plugin trước khi đổi theme hoặc bàn giao.
 
 ## Dữ liệu được giữ nguyên

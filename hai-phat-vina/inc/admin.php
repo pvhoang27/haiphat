@@ -35,6 +35,7 @@ if (!function_exists('hpv_register_settings')) {
             if (in_array($key, array('hero_image', 'about_image'), true)) { $result[$key] = absint($value); }
             elseif (in_array($key, array('email', 'recipient'), true)) { $result[$key] = sanitize_email($value); }
             elseif (in_array($key, array('description', 'hero_title', 'hero_text'), true)) { $result[$key] = sanitize_textarea_field($value); }
+            elseif (strpos($key, 'map_embed_') === 0) { $result[$key] = hpv_map_embed_url((string) $value); if ($value !== '' && $result[$key] === '') { $result[$key] = hpv_get($key); add_settings_error('hpv_settings', $key, 'Bản đồ chưa hợp lệ; hệ thống đã giữ liên kết cũ.'); } }
             elseif ($key === 'zalo') { $result[$key] = preg_replace('/\D/', '', $value); }
             else { $result[$key] = sanitize_text_field($value); }
         }
@@ -126,7 +127,7 @@ function hpv_settings_page() {
                 hpv_settings_field('phone', 'Hotline', 'tel'); hpv_settings_field('zalo', 'Số Zalo', 'tel', 'Chỉ nhập số, ví dụ 0868201868.');
                 hpv_settings_field('email', 'Email hiển thị', 'email'); hpv_settings_field('recipient', 'Email nhận yêu cầu báo giá', 'email');
             ?></div></section>
-            <section class="hpv-admin-panel"><h2>Các cơ sở</h2><div class="hpv-setting-grid"><?php for ($i = 1; $i <= 4; $i++) { hpv_settings_field('address_' . $i, 'Địa chỉ cơ sở ' . $i); } ?></div></section>
+            <section class="hpv-admin-panel"><h2>Các cơ sở</h2><p>Trên Google Maps, chọn cơ sở → Chia sẻ → Nhúng bản đồ → Sao chép HTML. Dán mã đó hoặc riêng đường dẫn nhúng vào ô tương ứng. Khi chưa có mã, nút chỉ đường sẽ mở Google Maps theo địa chỉ đã nhập.</p><div class="hpv-setting-grid"><?php for ($i = 1; $i <= 4; $i++) { hpv_settings_field('address_' . $i, 'Địa chỉ cơ sở ' . $i); hpv_settings_field('map_embed_' . $i, 'Mã nhúng Google Maps cơ sở ' . $i, 'textarea'); } ?></div></section>
             <section class="hpv-admin-panel"><h2>Thông tin chuyển khoản</h2><div class="hpv-setting-grid"><?php hpv_settings_field('bank_account', 'Số tài khoản'); hpv_settings_field('bank_name', 'Ngân hàng / chi nhánh'); ?></div></section>
             <section class="hpv-admin-panel"><h2>Mô tả website</h2><?php hpv_settings_field('description', 'Mô tả mặc định', 'textarea', 'Nếu đang dùng Rank Math, Yoast SEO hoặc AIOSEO, sửa mô tả tìm kiếm trong plugin SEO đó.'); ?><p>Tên website và mô tả dưới logo là các khối riêng trong <a href="<?php echo esc_url(hpv_site_editor_url('header')); ?>">Đầu trang</a>. Đổi tên thương hiệu ở đây không thay chữ bạn đã nhập trong nội dung trang.</p></section>
             <?php submit_button('Lưu thông tin công ty'); ?>

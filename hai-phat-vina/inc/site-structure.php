@@ -68,7 +68,7 @@ function hpv_customer_footer_markup($ids) {
             array(hpv_pattern_heading('Thông tin công ty', 2), hpv_pattern_block('hpv/company-info', array('layout' => 'footer'))),
             array(hpv_pattern_heading('Danh mục sản phẩm chính', 2), hpv_pattern_group($footer_products, 'hpv-footer-links')),
             array(hpv_pattern_heading('Chính sách', 2), hpv_pattern_group($policies, 'hpv-footer-links')),
-            array(hpv_pattern_heading('Danh sách chi nhánh', 2), hpv_pattern_paragraph(hpv_pattern_link('Xem danh sách chi nhánh', get_permalink($ids['danh-sach-chi-nhanh'])))),
+            array(hpv_pattern_heading('Danh sách chi nhánh', 2), hpv_pattern_block('hpv/company-info', array('layout' => 'footer-branches')), hpv_pattern_paragraph(hpv_pattern_link('Xem danh sách chi nhánh', get_permalink($ids['danh-sach-chi-nhanh'])))),
         ), 'hpv-footer-grid')), '', '', array('align' => 'wide', 'layout' => array('type' => 'default'))),
         hpv_pattern_group(array(hpv_pattern_paragraph('© Hải Phát Vina.')), 'hpv-footer-bottom', '', array('align' => 'wide', 'layout' => array('type' => 'flex'))),
     ), 'hpv-site-footer', 'Chân trang', array('align' => 'full'));
@@ -108,6 +108,53 @@ function hpv_compact_customer_footer() {
         if (is_wp_error($saved)) { return $saved; }
     }
     update_option('hpv_compact_footer_v1', 1, false);
+    return true;
+}
+
+function hpv_footer_has_branches($blocks) {
+    foreach ($blocks as $block) {
+        if ($block['blockName'] === 'hpv/company-info' && in_array(isset($block['attrs']['layout']) ? $block['attrs']['layout'] : '', array('branches', 'footer-branches'), true)) { return true; }
+        if (!empty($block['innerBlocks']) && hpv_footer_has_branches($block['innerBlocks'])) { return true; }
+    }
+    return false;
+}
+
+/** Insert the branch block in the existing branch column, retaining other edits. */
+function hpv_add_footer_branches_to_blocks(&$blocks, &$found, &$already_present) {
+    foreach ($blocks as &$block) {
+        if ($block['blockName'] === 'core/column' && strpos(serialize_block($block), 'Xem danh sách chi nhánh') !== false) {
+            $found++;
+            if (!hpv_footer_has_branches($block['innerBlocks'])) {
+                $block['innerBlocks'][] = parse_blocks(hpv_pattern_block('hpv/company-info', array('layout' => 'footer-branches')))[0];
+                $last = count($block['innerContent']) - 1;
+                if ($last < 0 || !is_string($block['innerContent'][$last]) || strpos($block['innerContent'][$last], '</div>') === false) { return new WP_Error('hpv_branch_column', 'Không thể chèn danh sách chi nhánh an toàn.'); }
+                array_splice($block['innerContent'], $last, 0, array(null));
+            } else { $already_present = true; }
+        } elseif (!empty($block['innerBlocks'])) {
+            $result = hpv_add_footer_branches_to_blocks($block['innerBlocks'], $found, $already_present);
+            if (is_wp_error($result)) { return $result; }
+        }
+    }
+    unset($block);
+    return true;
+}
+
+function hpv_restore_customer_footer_branches() {
+    if (get_option('hpv_footer_branches_v1')) { return true; }
+    $footer = get_block_template(get_stylesheet() . '//footer', 'wp_template_part');
+    if (!$footer) { return new WP_Error('hpv_footer_missing', 'Không tìm thấy chân trang.'); }
+    $blocks = parse_blocks($footer->content);
+    if (empty($footer->wp_id)) { $blocks = resolve_pattern_blocks($blocks); }
+    $found = 0; $already_present = false;
+    $result = hpv_add_footer_branches_to_blocks($blocks, $found, $already_present);
+    if (is_wp_error($result)) { return $result; }
+    if ($found !== 1) { return new WP_Error('hpv_branch_column', 'Không tìm thấy đúng một cột danh sách chi nhánh; cần kiểm tra chân trang.'); }
+    if (!$already_present) {
+        update_option('hpv_footer_branches_backup_v1', array('content' => $footer->content, 'post_id' => $footer->wp_id), false);
+        $saved = hpv_customer_save_part('footer', 'Chân trang', serialize_blocks($blocks));
+        if (is_wp_error($saved)) { return $saved; }
+    }
+    update_option('hpv_footer_branches_v1', 1, false);
     return true;
 }
 
