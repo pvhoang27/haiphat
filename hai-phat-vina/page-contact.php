@@ -18,18 +18,13 @@ get_header(); ?>
             </dl>
             <p class="contact-company-note">Vui lòng xác nhận đơn hàng và nội dung thanh toán qua hotline trước khi chuyển khoản.</p>
         </div>
-        <aside class="payment-card" aria-labelledby="payment-title">
+        <aside class="payment-card payment-card--simple" aria-labelledby="payment-title">
             <div class="payment-card-copy">
                 <span>Thông tin chuyển khoản</span>
                 <h2 id="payment-title"><?php echo esc_html(hpv_get('bank_name')); ?></h2>
                 <p>Số tài khoản</p>
                 <div class="payment-account"><strong><?php echo esc_html(hpv_get('bank_account')); ?></strong><button class="copy-account" type="button" data-copy="<?php echo esc_attr(hpv_get('bank_account')); ?>" aria-label="Sao chép số tài khoản"><?php echo hpv_icon('copy'); ?></button><span class="copy-status sr-only" role="status" aria-live="polite"></span></div>
             </div>
-            <?php if (hpv_get('bank_qr')) : ?>
-                <figure class="payment-qr"><?php echo wp_get_attachment_image(hpv_get('bank_qr'), 'medium', false, array('loading' => 'lazy', 'alt' => 'Mã QR chuyển khoản của ' . hpv_get('legal_name'))); ?><figcaption>Quét mã bằng ứng dụng ngân hàng</figcaption></figure>
-            <?php else : ?>
-                <div class="payment-qr-empty"><span>QR</span><p>Ảnh QR sẽ hiển thị sau khi được tải lên trong quản trị.</p></div>
-            <?php endif; ?>
         </aside>
     </div>
 </section>

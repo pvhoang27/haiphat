@@ -22,7 +22,6 @@ function hpv_defaults() {
         'description' => 'Hải Phát Vina — thông tin sản phẩm mái xếp, mái hiên, bạt nhựa, bạt HDPE và dù che ngoài trời. Liên hệ 0868.201.868 để trao đổi quy cách và nhận báo giá.',
         'hero_image' => 0,
         'about_image' => 0,
-        'bank_qr' => 0,
     );
 }
 
@@ -75,8 +74,8 @@ function hpv_icon($name, $class = '') {
     return '<svg class="icon ' . esc_attr($class) . '" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' . $path . '</svg>';
 }
 
-function hpv_brand() {
-    if (has_custom_logo()) { the_custom_logo(); return; }
+function hpv_brand($use_custom_logo = true) {
+    if ($use_custom_logo && has_custom_logo()) { the_custom_logo(); return; }
     echo '<a class="brand" href="' . esc_url(home_url('/')) . '" aria-label="' . esc_attr(hpv_get('brand') . ' — Trang chủ') . '">';
     echo '<svg class="brand-mark" width="54" height="48" viewBox="0 0 56 48" aria-hidden="true"><path d="m3 16 11-7v25L3 41Zm14-9 10-6v25l-10 6Zm13-6 10 6v25l-10-6Zm13 8 10 7v25l-10-7Z" fill="currentColor"/><path d="m17 35 10-6 13 7v6l-13-7-10 6Z" fill="#f1c75b"/></svg>';
     echo '<span><strong>' . esc_html(hpv_get('brand')) . '</strong><small>' . esc_html(hpv_get('tagline')) . '</small></span></a>';
