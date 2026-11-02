@@ -1,0 +1,16 @@
+<!-- wp:template-part {"slug":"header","tagName":"header","area":"header","theme":"hai-phat-vina"} /-->
+<!-- wp:group {"tagName":"main","anchor":"main-content","className":"hpv-main hpv-archive hpv-product-archive","style":{"spacing":{"margin":{"top":"0","bottom":"0"},"padding":{"top":"var:preset|spacing|60","bottom":"var:preset|spacing|70"}}},"layout":{"type":"constrained"}} -->
+<main class="wp-block-group hpv-main hpv-archive hpv-product-archive" id="main-content" style="margin-top:0;margin-bottom:0;padding-top:var(--wp--preset--spacing--60);padding-bottom:var(--wp--preset--spacing--70)">
+<!-- wp:query-title {"type":"archive","showPrefix":false,"align":"wide"} /--><!-- wp:term-description {"align":"wide"} /-->
+<!-- wp:query {"queryId":2,"query":{"perPage":12,"pages":0,"offset":0,"postType":"hpv_product","order":"asc","orderBy":"menu_order","author":"","search":"","exclude":[],"sticky":"","inherit":true},"align":"wide"} --><div class="wp-block-query alignwide">
+<!-- wp:post-template {"className":"hpv-card-grid hpv-product-grid","layout":{"type":"grid","columnCount":4}} -->
+<!-- wp:group {"className":"hpv-card hpv-product-card","layout":{"type":"default"}} --><div class="wp-block-group hpv-card hpv-product-card"><!-- wp:post-featured-image {"isLink":true,"aspectRatio":"5/4","sizeSlug":"hpv-card"} /--><!-- wp:post-terms {"term":"hpv_category"} /--><!-- wp:post-title {"isLink":true,"level":2,"fontSize":"large"} /--><!-- wp:post-excerpt {"moreText":"","excerptLength":19} /--><!-- wp:hpv/product-price /-->
+<!-- wp:read-more {"content":"Xem sản phẩm"} /--></div><!-- /wp:group -->
+<!-- /wp:post-template -->
+<!-- wp:query-no-results --><!-- wp:paragraph --><p>Sản phẩm đang được cập nhật. Gửi nhu cầu của bạn ở biểu mẫu bên dưới để Hải Phát Vina tư vấn.</p><!-- /wp:paragraph --><!-- /wp:query-no-results -->
+<!-- wp:query-pagination {"paginationArrow":"arrow","layout":{"type":"flex","justifyContent":"center"}} --><!-- wp:query-pagination-previous {"label":"Trang trước"} /--><!-- wp:query-pagination-numbers /--><!-- wp:query-pagination-next {"label":"Trang sau"} /--><!-- /wp:query-pagination -->
+</div><!-- /wp:query -->
+</main><!-- /wp:group -->
+<!-- wp:template-part {"slug":"contact","theme":"hai-phat-vina"} /-->
+<!-- wp:template-part {"slug":"footer","tagName":"footer","area":"footer","theme":"hai-phat-vina"} /-->
+<!-- wp:hpv/floating-contact /-->

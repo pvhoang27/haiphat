@@ -1,0 +1,39 @@
+{
+    "schema": 1,
+    "theme": "hai-phat-vina",
+    "site": "https://haiphatvina.com/",
+    "pages": [
+        {
+            "file": "pages/21.html",
+            "path": "gioi-thieu",
+            "title": "Giới thiệu",
+            "template": "page-full-width",
+            "front_page": false,
+            "posts_page": false
+        },
+        {
+            "file": "pages/23.html",
+            "path": "lien-he",
+            "title": "Liên hệ",
+            "template": "page-full-width",
+            "front_page": false,
+            "posts_page": false
+        },
+        {
+            "file": "pages/25.html",
+            "path": "chinh-sach-ban-hang",
+            "title": "Chính sách bán hàng",
+            "template": "default",
+            "front_page": false,
+            "posts_page": false
+        },
+        {
+            "file": "pages/29.html",
+            "path": "trang-chu",
+            "title": "Trang chủ",
+            "template": "default",
+            "front_page": true,
+            "posts_page": false
+        }
+    ]
+}

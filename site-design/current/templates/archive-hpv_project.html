@@ -1,0 +1,15 @@
+<!-- wp:template-part {"slug":"header","tagName":"header","area":"header","theme":"hai-phat-vina"} /-->
+<!-- wp:group {"tagName":"main","anchor":"main-content","className":"hpv-main hpv-archive","style":{"spacing":{"margin":{"top":"0","bottom":"0"},"padding":{"top":"var:preset|spacing|60","bottom":"var:preset|spacing|70"}}},"layout":{"type":"constrained"}} -->
+<main class="wp-block-group hpv-main hpv-archive" id="main-content" style="margin-top:0;margin-bottom:0;padding-top:var(--wp--preset--spacing--60);padding-bottom:var(--wp--preset--spacing--70)">
+<!-- wp:group {"className":"hpv-page-intro","layout":{"type":"default"},"align":"wide"} --><div class="wp-block-group alignwide hpv-page-intro"><!-- wp:query-title {"type":"archive","showPrefix":false} /--><!-- wp:paragraph {"textColor":"muted"} --><p class="has-muted-color has-text-color">Khám phá ứng dụng của bạt và mái che trong đời sống, kinh doanh và sản xuất.</p><!-- /wp:paragraph --></div><!-- /wp:group -->
+<!-- wp:query {"queryId":3,"query":{"perPage":9,"pages":0,"offset":0,"postType":"hpv_project","order":"desc","orderBy":"date","author":"","search":"","exclude":[],"sticky":"","inherit":true},"align":"wide"} --><div class="wp-block-query alignwide">
+<!-- wp:post-template {"className":"hpv-card-grid hpv-project-grid","layout":{"type":"grid","columnCount":3}} -->
+<!-- wp:group {"className":"hpv-card hpv-project-card","layout":{"type":"default"}} --><div class="wp-block-group hpv-card hpv-project-card"><!-- wp:post-featured-image {"isLink":true,"aspectRatio":"4/3","sizeSlug":"hpv-card"} /--><!-- wp:post-title {"isLink":true,"level":2,"fontSize":"large"} /--><!-- wp:post-excerpt {"moreText":"Xem chi tiết","excerptLength":24} /--></div><!-- /wp:group -->
+<!-- /wp:post-template -->
+<!-- wp:query-no-results --><!-- wp:paragraph --><p>Công trình và ứng dụng đang được cập nhật. Hãy gửi nhu cầu để được tư vấn phương án phù hợp.</p><!-- /wp:paragraph --><!-- /wp:query-no-results -->
+<!-- wp:query-pagination {"paginationArrow":"arrow","layout":{"type":"flex","justifyContent":"center"}} --><!-- wp:query-pagination-previous {"label":"Trang trước"} /--><!-- wp:query-pagination-numbers /--><!-- wp:query-pagination-next {"label":"Trang sau"} /--><!-- /wp:query-pagination -->
+</div><!-- /wp:query -->
+</main><!-- /wp:group -->
+<!-- wp:template-part {"slug":"contact","theme":"hai-phat-vina"} /-->
+<!-- wp:template-part {"slug":"footer","tagName":"footer","area":"footer","theme":"hai-phat-vina"} /-->
+<!-- wp:hpv/floating-contact /-->
