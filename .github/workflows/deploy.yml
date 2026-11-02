@@ -1,9 +1,8 @@
-name: Test and deploy WordPress theme
+name: Test and deploy WordPress
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -15,25 +14,55 @@ permissions:
 
 jobs:
   test:
-    name: Check theme
+    name: Test theme, business plugin and handover
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Check PHP syntax
-        run: find hai-phat-vina -type f -name '*.php' -print0 | xargs -0 -n1 php -l
-
-      - name: Verify required theme files
+      - uses: actions/checkout@v4
+      - name: Check PHP, JavaScript and shell syntax
         run: |
-          test -f hai-phat-vina/style.css
-          test -f hai-phat-vina/functions.php
-          test -f hai-phat-vina/index.php
+          set -euo pipefail
+          find hai-phat-vina hai-phat-vina-core dev/deploy dev/runtime-checks -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          node --check hai-phat-vina/assets/js/main.js
+          node --check hai-phat-vina-core/assets/blocks.js
+          node --check hai-phat-vina-core/assets/contact.js
+          bash -n dev/deploy/remote.sh
+          test -f hai-phat-vina/templates/index.html
+          test -f hai-phat-vina-core/hai-phat-vina-core.php
+      - name: Start disposable WordPress
+        run: |
+          set -euo pipefail
+          docker compose -f dev/compose.yaml up -d
+          for attempt in $(seq 1 60); do
+            if docker compose -f dev/compose.yaml exec -T wordpress php -r 'exit(is_file("/var/www/html/wp-load.php") ? 0 : 1);'; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+      - name: Install local fixtures and migrate pages
+        run: |
+          set -euo pipefail
+          docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/bootstrap.php
+          docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/block-setup.php
+          docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/block-install.php
+      - name: Check public pages, forms, private data and customer editing permissions
+        run: |
+          set -euo pipefail
+          python3 dev/check-http.py
+          docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify.php
+          docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-handover.php
+          docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-site-identity.php
+          docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-editable-blocks.php
+      - name: Verify legacy upgrade, repeat deployment and automatic rollback
+        run: bash dev/verify-deployment.sh
+      - name: Stop disposable test services
+        if: always()
+        run: docker compose -f dev/compose.yaml down --volumes
 
   deploy:
-    name: Deploy production theme
+    name: Deploy production theme and business plugin
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment: production
     env:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -41,20 +70,18 @@ jobs:
       DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
       THEME_PATH: ${{ secrets.THEME_PATH }}
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Validate deployment configuration
         shell: bash
         run: |
           set -euo pipefail
           test -n "$DEPLOY_HOST"
           test -n "$DEPLOY_USER"
-          test -n "$DEPLOY_PORT"
-          test -n "$THEME_PATH"
           [[ "$DEPLOY_PORT" =~ ^[0-9]+$ ]]
-          [[ "$THEME_PATH" =~ /wp-content/themes/hai-phat-vina/?$ ]]
-
+          THEME_PATH="${THEME_PATH%/}"
+          [[ "$THEME_PATH" =~ ^/[a-zA-Z0-9_./-]+/wp-content/themes/hai-phat-vina$ ]]
+          [[ "$THEME_PATH" != *..* ]]
+          printf 'WP_ROOT=%s\n' "${THEME_PATH%/wp-content/themes/hai-phat-vina}" >> "$GITHUB_ENV"
       - name: Configure SSH
         shell: bash
         env:
@@ -69,26 +96,27 @@ jobs:
           chmod 600 ~/.ssh/haiphat_deploy
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
-
-      - name: Verify destination
+      - name: Verify server and prepare release staging
         shell: bash
         run: |
           set -euo pipefail
-          ssh -i ~/.ssh/haiphat_deploy -p "$DEPLOY_PORT" \
-            -o BatchMode=yes -o StrictHostKeyChecking=yes \
-            "$DEPLOY_USER@$DEPLOY_HOST" \
-            "test -d '$THEME_PATH' && test -f '$THEME_PATH/style.css'"
-
-      - name: Deploy theme
+          ssh -i ~/.ssh/haiphat_deploy -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            "test -f '$WP_ROOT/wp-load.php' && test -f '$WP_ROOT/wp-content/themes/hai-phat-vina/style.css' && command -v php && command -v flock && mkdir -p '$WP_ROOT/wp-content/.hpv-releases/$GITHUB_SHA/theme' '$WP_ROOT/wp-content/.hpv-releases/$GITHUB_SHA/plugin'"
+      - name: Upload theme, plugin and deployment lifecycle
         shell: bash
         run: |
           set -euo pipefail
-          rsync --archive --compress --delete-delay --delay-updates \
-            --exclude='.git/' \
-            --exclude='.DS_Store' \
-            -e "ssh -i ~/.ssh/haiphat_deploy -p $DEPLOY_PORT -o BatchMode=yes -o StrictHostKeyChecking=yes" \
-            hai-phat-vina/ "$DEPLOY_USER@$DEPLOY_HOST:$THEME_PATH/"
-
+          transport="ssh -i $HOME/.ssh/haiphat_deploy -p $DEPLOY_PORT -o BatchMode=yes -o StrictHostKeyChecking=yes"
+          destination="$DEPLOY_USER@$DEPLOY_HOST:$WP_ROOT/wp-content/.hpv-releases/$GITHUB_SHA"
+          rsync --archive --compress --delay-updates --exclude='.DS_Store' -e "$transport" hai-phat-vina/ "$destination/theme/"
+          rsync --archive --compress --delay-updates --exclude='.DS_Store' -e "$transport" hai-phat-vina-core/ "$destination/plugin/"
+          rsync --archive --compress -e "$transport" dev/deploy/ "$destination/"
+      - name: Back up, activate, migrate and verify production
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/haiphat_deploy -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            "bash '$WP_ROOT/wp-content/.hpv-releases/$GITHUB_SHA/remote.sh' '$WP_ROOT' '$GITHUB_SHA'"
       - name: Remove deployment key
         if: always()
         run: rm -f ~/.ssh/haiphat_deploy

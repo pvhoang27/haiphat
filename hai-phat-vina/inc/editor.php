@@ -29,13 +29,13 @@ function hpv_editor_guide() {
         <ol><li>Mở <strong>Bài viết → Viết bài mới</strong>, đặt tiêu đề cụ thể theo nhu cầu người đọc.</li><li>Viết đoạn giới thiệu ngắn. Chia phần nội dung bằng Tiêu đề H2 và H3; tiêu đề bài đã là H1.</li><li>Chọn chuyên mục, ảnh đại diện, điền đoạn tóm tắt và đường dẫn ngắn gọn.</li><li>Thêm văn bản thay thế mô tả đúng ảnh. Chèn liên kết tới sản phẩm hoặc bài liên quan khi có ích.</li><li>Xem trước trên máy tính và điện thoại. Lưu nháp, gửi duyệt hoặc đăng / đặt lịch tùy quyền tài khoản.</li></ol>
         <h2>Mẫu nội dung dùng ngay</h2>
         <p>Trong trình soạn thảo, mở nút <strong>+</strong>, chọn <strong>Mẫu / Patterns → Hải Phát Vina — nội dung</strong>. Có sẵn khung bài hướng dẫn, bảng so sánh và khối liên hệ cuối bài. Các phần đều sửa bằng block WordPress thông thường.</p>
-        <p>Bài có từ hai tiêu đề H2/H3 sẽ được tạo mục lục trên giao diện khi bật JavaScript. Thời gian đọc hiển thị là ước tính theo độ dài nội dung.</p>
+        <p>Bài có từ hai tiêu đề H2/H3 sẽ được tạo mục lục trên giao diện khi dùng mẫu bài viết có khối Mục lục và bật JavaScript.</p>
         <h2>SEO cho từng bài</h2>
         <p>Theme có cấu trúc tiêu đề, trang chuyên mục, đường dẫn, mô tả cơ bản và giao diện bài đọc. Nếu cần ô chỉnh SEO title, meta description, từ khóa mục tiêu và xem trước kết quả tìm kiếm, quản trị viên có thể cài <strong>một</strong> plugin như Yoast SEO hoặc Rank Math.</p>
         <p>Plugin SEO được cấu hình trong quản trị và có thể yêu cầu quyền riêng. Theme tự ngừng xuất mô tả / schema cơ bản khi phát hiện Yoast SEO, Rank Math hoặc AIOSEO để tránh trùng lặp. Không có cam kết tự động tăng thứ hạng.</p>
         <h2>Phân quyền cho nhóm</h2>
-        <ul><li><strong>Biên tập viên / Editor:</strong> quản lý và xuất bản bài của nhóm.</li><li><strong>Tác giả / Author:</strong> viết, tải ảnh và xuất bản bài của mình.</li><li><strong>Cộng tác viên / Contributor:</strong> viết nháp, gửi người có quyền duyệt.</li></ul>
-        <p>Quản trị viên tạo tài khoản tại <strong>Thành viên → Thêm mới</strong>. Không cần cấp quyền quản trị chỉ để viết bài. Yêu cầu báo giá riêng tư của khách vẫn chỉ dành cho tài khoản có quyền quản lý cài đặt.</p>
+        <ul><li><strong>Quản lý website:</strong> quản lý nội dung, giao diện, thông tin công ty và yêu cầu báo giá.</li><li><strong>Biên tập viên / Editor:</strong> quản lý và xuất bản bài của nhóm.</li><li><strong>Tác giả / Author:</strong> viết, tải ảnh và xuất bản bài của mình.</li><li><strong>Cộng tác viên / Contributor:</strong> viết nháp, gửi người có quyền duyệt.</li></ul>
+        <p>Quản trị viên tạo tài khoản tại <strong>Thành viên → Thêm mới</strong>. Không cần cấp quyền quản trị chỉ để viết bài. Yêu cầu báo giá riêng tư chỉ dành cho Quản trị viên và Quản lý website.</p>
         <p>Giờ đăng theo múi giờ tại <strong>Cài đặt → Tổng quan</strong>. Đăng theo lịch phụ thuộc cơ chế tác vụ của WordPress / hosting.</p>
         <h2>Nội dung trước khi đăng</h2>
         <p>Xác nhận giá, quy cách, chính sách bảo hành và nguồn ảnh. Nội dung mẫu và ảnh minh họa trong theme cần được thay hoặc rà soát theo thông tin thực tế của công ty.</p>

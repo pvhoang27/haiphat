@@ -97,7 +97,11 @@ function hpv_create_demo_content() {
 function hpv_handle_setup() {
     if (!current_user_can('manage_options')) { wp_die('Bạn không có quyền thiết lập website.', '', array('response' => 403)); }
     check_admin_referer('hpv_setup_demo');
-    hpv_create_demo_content();
+    $page_ids = hpv_create_demo_content();
+    if (wp_is_block_theme()) {
+        $result = hpv_prepare_block_site($page_ids);
+        if (is_wp_error($result)) { wp_die(esc_html($result->get_error_message()), 'Chưa chuẩn bị được trang', array('back_link' => true)); }
+    }
     wp_safe_redirect(admin_url('admin.php?page=hpv-settings&hpv_setup=done')); exit;
 }
 add_action('admin_post_hpv_setup_demo', 'hpv_handle_setup');

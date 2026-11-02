@@ -1,11 +1,18 @@
 <?php
 defined('ABSPATH') || exit;
+if (!function_exists('hpv_quote_form')) {
 
 function hpv_form_messages() {
     return array('success' => 'Đã nhận yêu cầu của bạn. Hải Phát Vina sẽ liên hệ theo số điện thoại bạn cung cấp.', 'invalid' => 'Vui lòng nhập họ tên, số điện thoại hợp lệ và đồng ý cho phép liên hệ.', 'expired' => 'Phiên gửi đã hết hạn. Vui lòng tải lại trang rồi gửi lại.', 'limited' => 'Bạn vừa gửi yêu cầu. Vui lòng đợi một phút hoặc gọi hotline nếu cần trao đổi ngay.', 'error' => 'Chưa lưu được yêu cầu. Vui lòng thử lại hoặc gọi hotline.');
 }
 
-function hpv_quote_form($variant = 'full') {
+function hpv_quote_form($variant = 'full', $labels = array(), $needs = null) {
+    $defaults = array('nameLabel' => 'Họ và tên', 'phoneLabel' => 'Số điện thoại', 'needLabel' => 'Bạn đang quan tâm', 'locationLabel' => 'Khu vực cần tư vấn', 'messageLabel' => 'Nhu cầu của bạn', 'consentText' => 'Tôi đồng ý để Hải Phát Vina sử dụng thông tin trên để liên hệ tư vấn.', 'privacyLabel' => 'Chính sách bảo mật', 'submitLabel' => 'Gửi yêu cầu báo giá', 'namePlaceholder' => 'Tên của bạn', 'phonePlaceholder' => 'Số điện thoại để tư vấn', 'needPlaceholder' => 'Chọn sản phẩm / dịch vụ', 'locationPlaceholder' => 'Quận / huyện, tỉnh / thành', 'messagePlaceholder' => 'Ví dụ: mái xếp cho sân rộng 5 × 8 m, tại Hà Đông…');
+    $labels = is_array($labels) ? $labels : array();
+    foreach ($defaults as $key => $value) { $defaults[$key] = isset($labels[$key]) && is_string($labels[$key]) && trim($labels[$key]) !== '' ? sanitize_text_field($labels[$key]) : $value; }
+    $copy = $defaults;
+    $needs = is_array($needs) ? array_slice(array_values(array_filter(array_map(function ($need) { return is_string($need) ? sanitize_text_field($need) : ''; }, $needs))), 0, 30) : array('Mái xếp & mái hiên', 'Bạt nhựa che phủ', 'Bạt HDPE lót hồ', 'Dù che ngoài trời', 'May ép bạt / phụ kiện', 'Cần tư vấn thêm');
+    if (function_exists('hpv_enqueue_contact_assets')) { hpv_enqueue_contact_assets(); }
     static $count = 0;
     $count++;
     $id = 'hpv-form-' . $count;
@@ -18,13 +25,13 @@ function hpv_quote_form($variant = 'full') {
         <input type="hidden" name="hpv_return" value="<?php echo esc_url(hpv_page_url('contact')); ?>">
         <input type="hidden" name="hpv_token" value="<?php echo esc_attr(wp_generate_uuid4()); ?>">
         <?php wp_nonce_field('hpv_quote', 'hpv_nonce', false); ?>
-        <div class="form-trap" aria-hidden="true"><label for="<?php echo esc_attr($id); ?>-site">Không điền trường này</label><input type="text" id="<?php echo esc_attr($id); ?>-site" name="company_website" value="" tabindex="-1" autocomplete="off"></div>
-        <div class="form-row"><div class="form-field"><label for="<?php echo esc_attr($id); ?>-name">Họ và tên <span aria-hidden="true">*</span></label><input id="<?php echo esc_attr($id); ?>-name" name="hpv_name" autocomplete="name" placeholder="Tên của bạn" required maxlength="100"></div>
-        <div class="form-field"><label for="<?php echo esc_attr($id); ?>-phone">Số điện thoại <span aria-hidden="true">*</span></label><input id="<?php echo esc_attr($id); ?>-phone" name="hpv_phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Số điện thoại để tư vấn" required maxlength="24"></div></div>
-        <div class="form-row"><div class="form-field"><label for="<?php echo esc_attr($id); ?>-need">Bạn đang quan tâm</label><select id="<?php echo esc_attr($id); ?>-need" name="hpv_need"><option value="">Chọn sản phẩm / dịch vụ</option><?php foreach (array('Mái xếp & mái hiên', 'Bạt nhựa che phủ', 'Bạt HDPE lót hồ', 'Dù che ngoài trời', 'May ép bạt / phụ kiện', 'Cần tư vấn thêm') as $need) { echo '<option value="' . esc_attr($need) . '">' . esc_html($need) . '</option>'; } ?></select></div><div class="form-field"><label for="<?php echo esc_attr($id); ?>-location">Khu vực cần tư vấn</label><input id="<?php echo esc_attr($id); ?>-location" name="hpv_location" autocomplete="address-level2" placeholder="Quận / huyện, tỉnh / thành" maxlength="200"></div></div>
-        <div class="form-field"><label for="<?php echo esc_attr($id); ?>-message">Nhu cầu của bạn</label><textarea id="<?php echo esc_attr($id); ?>-message" name="hpv_message" rows="3" placeholder="Ví dụ: mái xếp cho sân rộng 5 × 8 m, tại Hà Đông…" maxlength="3000"><?php echo $product ? esc_textarea('Tôi quan tâm: ' . $product . '. ') : ''; ?></textarea></div>
-        <label class="consent"><input type="checkbox" name="hpv_consent" value="1" required><span>Tôi đồng ý để Hải Phát Vina sử dụng thông tin trên để liên hệ tư vấn. <a href="<?php echo esc_url(hpv_page_url('privacy')); ?>">Chính sách bảo mật</a></span></label>
-        <button class="button button--orange form-submit" type="submit"><span>Gửi yêu cầu báo giá</span><?php echo hpv_icon('arrow'); ?></button>
+        <div class="form-trap" hidden aria-hidden="true"><label for="<?php echo esc_attr($id); ?>-site">Không điền trường này</label><input type="text" id="<?php echo esc_attr($id); ?>-site" name="company_website" value="" tabindex="-1" autocomplete="off"></div>
+        <div class="form-row"><div class="form-field"><label for="<?php echo esc_attr($id); ?>-name"><?php echo esc_html($copy['nameLabel']); ?> <span aria-hidden="true">*</span></label><input id="<?php echo esc_attr($id); ?>-name" name="hpv_name" autocomplete="name" placeholder="<?php echo esc_attr($copy['namePlaceholder']); ?>" required maxlength="100"></div>
+        <div class="form-field"><label for="<?php echo esc_attr($id); ?>-phone"><?php echo esc_html($copy['phoneLabel']); ?> <span aria-hidden="true">*</span></label><input id="<?php echo esc_attr($id); ?>-phone" name="hpv_phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="<?php echo esc_attr($copy['phonePlaceholder']); ?>" required maxlength="24"></div></div>
+        <div class="form-row"><div class="form-field"><label for="<?php echo esc_attr($id); ?>-need"><?php echo esc_html($copy['needLabel']); ?></label><select id="<?php echo esc_attr($id); ?>-need" name="hpv_need"><option value=""><?php echo esc_html($copy['needPlaceholder']); ?></option><?php foreach ($needs as $need) { echo '<option value="' . esc_attr($need) . '">' . esc_html($need) . '</option>'; } ?></select></div><div class="form-field"><label for="<?php echo esc_attr($id); ?>-location"><?php echo esc_html($copy['locationLabel']); ?></label><input id="<?php echo esc_attr($id); ?>-location" name="hpv_location" autocomplete="address-level2" placeholder="<?php echo esc_attr($copy['locationPlaceholder']); ?>" maxlength="200"></div></div>
+        <div class="form-field"><label for="<?php echo esc_attr($id); ?>-message"><?php echo esc_html($copy['messageLabel']); ?></label><textarea id="<?php echo esc_attr($id); ?>-message" name="hpv_message" rows="3" placeholder="<?php echo esc_attr($copy['messagePlaceholder']); ?>" maxlength="3000"><?php echo $product ? esc_textarea('Tôi quan tâm: ' . $product . '. ') : ''; ?></textarea></div>
+        <label class="consent"><input type="checkbox" name="hpv_consent" value="1" required><span><?php echo esc_html($copy['consentText']); ?> <a href="<?php echo esc_url(hpv_page_url('privacy')); ?>"><?php echo esc_html($copy['privacyLabel']); ?></a></span></label>
+        <button class="button button--orange form-submit" type="submit"><span><?php echo esc_html($copy['submitLabel']); ?></span><?php if (function_exists('hpv_icon')) { echo hpv_icon('arrow'); } ?></button>
         <div class="form-status <?php echo $status === 'success' ? 'is-success' : ''; ?>" role="status" aria-live="polite" tabindex="-1"><?php echo isset($messages[$status]) ? esc_html($messages[$status]) : ''; ?></div>
         <noscript><p>Form vẫn gửi được khi tắt JavaScript. Bạn sẽ được chuyển tới trang thông báo kết quả.</p></noscript>
     </form>
@@ -59,7 +66,7 @@ function hpv_contact_value($key, $max = 200) {
 }
 
 function hpv_handle_quote() {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') { hpv_quote_response('invalid', 405); }
+    if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') { hpv_quote_response('invalid', 405); }
     if (!wp_verify_nonce(hpv_contact_value('hpv_nonce'), 'hpv_quote')) { hpv_quote_response('expired', 403); }
     if (hpv_contact_value('company_website') !== '') { hpv_quote_response('invalid', 422); }
     $name = hpv_contact_value('hpv_name', 100);
@@ -68,14 +75,15 @@ function hpv_handle_quote() {
     if (!$name || !preg_match('/^\+?[0-9() .-]+$/', $phone) || strlen($digits) < 9 || strlen($digits) > 15 || hpv_contact_value('hpv_consent') !== '1') { hpv_quote_response('invalid', 422); }
     $token = hpv_contact_value('hpv_token', 50);
     if (!preg_match('/^[a-f0-9-]{36}$/i', $token)) { hpv_quote_response('invalid', 422); }
-    $dedupe = 'hpv_sent_' . md5($token);
+    $need = hpv_contact_value('hpv_need');
+    $location = hpv_contact_value('hpv_location');
+    $message = hpv_contact_value('hpv_message', 3000);
+    // Cached pages can share a hidden token: only deduplicate the same payload.
+    $dedupe = 'hpv_sent_' . hash_hmac('sha256', implode("\0", array($token, $name, $phone, $need, $location, $message)), wp_salt('nonce'));
     if (get_transient($dedupe)) { hpv_quote_response('success'); }
     $ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : 'unknown';
     $rate_key = 'hpv_rate_' . hash_hmac('sha256', $ip, wp_salt('nonce'));
     if (get_transient($rate_key)) { hpv_quote_response('limited', 429); }
-    $need = hpv_contact_value('hpv_need');
-    $location = hpv_contact_value('hpv_location');
-    $message = hpv_contact_value('hpv_message', 3000);
     $body = "Họ tên: {$name}\nĐiện thoại: {$phone}\nQuan tâm: {$need}\nKhu vực: {$location}\n\nNội dung:\n{$message}\n\nKhách đã đồng ý cho phép liên hệ tư vấn.\nThời gian: " . current_time('mysql');
     $post_id = wp_insert_post(wp_slash(array('post_type' => 'hpv_request', 'post_status' => 'private', 'post_title' => $name . ' — ' . $phone, 'post_content' => $body, 'meta_input' => array('_hpv_phone' => $phone, '_hpv_need' => $need, '_hpv_consent' => '1'))), true);
     if (is_wp_error($post_id) || !$post_id) { hpv_quote_response('error', 500); }
@@ -87,3 +95,13 @@ function hpv_handle_quote() {
 }
 add_action('admin_post_hpv_quote', 'hpv_handle_quote');
 add_action('admin_post_nopriv_hpv_quote', 'hpv_handle_quote');
+
+/** Usable in the native editor and after switching to a different theme. */
+function hpv_quote_shortcode($attributes = array()) {
+    $attributes = shortcode_atts(array('variant' => 'full'), $attributes, 'hpv_quote_form');
+    ob_start();
+    hpv_quote_form(sanitize_key($attributes['variant']));
+    return ob_get_clean();
+}
+add_shortcode('hpv_quote_form', 'hpv_quote_shortcode');
+}

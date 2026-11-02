@@ -1,0 +1,34 @@
+/* Scoped form styles travel with the business plugin across theme changes. */
+.quote-form { color: #193c33; font: inherit; text-align: left; }
+.quote-form *, .quote-form *::before, .quote-form *::after { box-sizing: border-box; }
+.quote-form .form-trap[hidden] { display: none !important; }
+.quote-form .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.quote-form .form-field { min-width: 0; margin-bottom: 20px; }
+.quote-form .form-field > label { display: block; margin-bottom: 8px; color: #1b3b32; font-size: .875rem; font-weight: 600; line-height: 1.6; }
+.quote-form .form-field > label > span { color: #8a321d; }
+.quote-form .form-field input,
+.quote-form .form-field select,
+.quote-form .form-field textarea { display: block; width: 100%; min-height: 48px; margin: 0; padding: 12px 13px; border: 1px solid #baccc0; border-radius: 5px; background: #fff; color: #193c33; font: inherit; font-size: 1rem; line-height: 1.5; }
+.quote-form .form-field input::placeholder,
+.quote-form .form-field textarea::placeholder { color: #65766b; opacity: 1; }
+.quote-form .form-field textarea { min-height: 110px; resize: vertical; }
+.quote-form input:focus-visible,
+.quote-form select:focus-visible,
+.quote-form textarea:focus-visible,
+.quote-form button:focus-visible,
+.quote-form a:focus-visible { outline: 3px solid #af760a; outline-offset: 3px; }
+.quote-form .consent { display: flex; align-items: flex-start; gap: 11px; margin: 2px 0 23px; color: #465e52; font-size: .875rem; line-height: 1.75; }
+.quote-form .consent input { flex: 0 0 auto; width: 18px; height: 18px; margin: 5px 0 0; accent-color: #17634a; }
+.quote-form .consent a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.quote-form .form-submit { display: inline-flex; align-items: center; justify-content: space-between; gap: 18px; width: 100%; min-height: 51px; margin: 0; padding: 13px 19px; border: 1px solid #123d32; border-radius: 5px; background: #123d32; color: #fff; font: inherit; font-size: .9375rem; font-weight: 600; cursor: pointer; }
+.quote-form .form-submit:hover { background: #1b5947; border-color: #1b5947; }
+.quote-form .form-submit:disabled { cursor: wait; opacity: .65; }
+.quote-form .form-submit svg { flex: 0 0 auto; width: 22px; height: 22px; }
+.quote-form .form-status:empty { display: none; }
+.quote-form .form-status { margin-top: 17px; padding: 14px 16px; border-left: 3px solid #aa3c24; border-radius: 3px; background: #fff0eb; color: #873b27; font-size: .875rem; line-height: 1.8; overflow-wrap: anywhere; }
+.quote-form .form-status.is-success { border-left-color: #276044; background: #edf7eb; color: #27563c; }
+.quote-form noscript p { margin-top: 15px; font-size: .875rem; }
+@media (max-width: 560px) {
+    .quote-form .form-row { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .quote-form .form-field { margin-bottom: 18px; }
+}

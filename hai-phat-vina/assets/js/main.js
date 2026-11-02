@@ -17,7 +17,7 @@
   desktop.addEventListener?.('change', (event) => { if (event.matches) setMenu(false); });
 
   // Enhance long-form posts without altering the content saved by the writer.
-  const article = document.querySelector('[data-article-content]');
+  const article = document.querySelector('[data-article-content], .hpv-editorial-single .editorial-content');
   const toc = document.querySelector('[data-article-toc]');
   if (article && toc) {
     const headings = [...article.querySelectorAll('h2,h3')].filter((heading) => heading.textContent.trim());
@@ -39,7 +39,7 @@
         links.push(link);
       });
       toc.hidden = false;
-      article.closest('.article-reading-layout').classList.add('has-toc');
+      article.closest('.article-reading-layout')?.classList.add('has-toc');
       if ('IntersectionObserver' in window) {
         const observer = new IntersectionObserver((entries) => {
           entries.forEach((entry) => {
@@ -88,6 +88,8 @@
   }));
 
   document.querySelectorAll('[data-quote-form]').forEach((form) => {
+    if (window.hpvContactConfig || form.dataset.hpvEnhanced) return;
+    form.dataset.hpvEnhanced = '1';
     form.addEventListener('submit', async (event) => {
       if (!window.fetch || !window.FormData || !window.hpvConfig) return;
       event.preventDefault();

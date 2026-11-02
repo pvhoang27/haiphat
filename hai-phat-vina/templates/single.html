@@ -1,0 +1,24 @@
+<!-- wp:template-part {"slug":"header","tagName":"header","area":"header"} /-->
+<!-- wp:group {"tagName":"main","anchor":"main-content","className":"hpv-main hpv-editorial-single","style":{"spacing":{"margin":{"top":"0","bottom":"0"},"padding":{"top":"var:preset|spacing|60","bottom":"var:preset|spacing|70"}}},"layout":{"type":"constrained"}} -->
+<main class="wp-block-group hpv-main hpv-editorial-single" id="main-content" style="margin-top:0;margin-bottom:0;padding-top:var(--wp--preset--spacing--60);padding-bottom:var(--wp--preset--spacing--70)">
+<!-- wp:group {"tagName":"article","layout":{"type":"constrained"}} --><article class="wp-block-group">
+<!-- wp:post-title {"level":1,"align":"wide"} /-->
+<!-- wp:group {"className":"hpv-article-meta","layout":{"type":"flex","flexWrap":"wrap"}} --><div class="wp-block-group hpv-article-meta"><!-- wp:post-terms {"term":"category"} /--><!-- wp:post-date {"format":"d/m/Y"} /--></div><!-- /wp:group -->
+<!-- wp:post-excerpt {"showMoreOnNewLine":false,"fontSize":"large"} /-->
+<!-- wp:post-featured-image {"align":"wide","aspectRatio":"16/9","sizeSlug":"hpv-wide"} /-->
+<!-- wp:hpv/article-toc /-->
+<!-- wp:post-content {"className":"editorial-content hpv-page-content","layout":{"type":"constrained"}} /-->
+<!-- wp:post-terms {"term":"post_tag","className":"hpv-article-tags"} /-->
+<!-- wp:separator --><hr class="wp-block-separator has-alpha-channel-opacity"/><!-- /wp:separator -->
+<!-- wp:group {"className":"hpv-post-navigation","layout":{"type":"flex","justifyContent":"space-between","flexWrap":"wrap"}} --><div class="wp-block-group hpv-post-navigation"><!-- wp:post-navigation-link {"type":"previous","label":"Bài trước","showTitle":true} /--><!-- wp:post-navigation-link {"label":"Bài tiếp theo","showTitle":true} /--></div><!-- /wp:group -->
+<!-- wp:comments {"className":"hpv-comments"} --><div class="wp-block-comments hpv-comments">
+<!-- wp:comments-title {"level":2,"fontSize":"x-large"} /-->
+<!-- wp:comment-template --><!-- wp:group {"className":"hpv-comment","layout":{"type":"default"}} --><div class="wp-block-group hpv-comment"><!-- wp:comment-author-name /--><!-- wp:comment-date /--><!-- wp:comment-content /--><!-- wp:comment-reply-link /--></div><!-- /wp:group --><!-- /wp:comment-template -->
+<!-- wp:comments-pagination {"layout":{"type":"flex","justifyContent":"center"}} --><!-- wp:comments-pagination-previous /--><!-- wp:comments-pagination-numbers /--><!-- wp:comments-pagination-next /--><!-- /wp:comments-pagination -->
+<!-- wp:post-comments-form /-->
+</div><!-- /wp:comments -->
+</article><!-- /wp:group -->
+</main><!-- /wp:group -->
+<!-- wp:template-part {"slug":"contact"} /-->
+<!-- wp:template-part {"slug":"footer","tagName":"footer","area":"footer"} /-->
+<!-- wp:hpv/floating-contact /-->

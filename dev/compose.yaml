@@ -30,6 +30,7 @@ services:
     volumes:
       - wordpress:/var/www/html
       - ../hai-phat-vina:/var/www/html/wp-content/themes/hai-phat-vina:ro
+      - ../hai-phat-vina-core:/var/www/html/wp-content/plugins/hai-phat-vina-core:ro
       - ./runtime-checks:/opt/hpv-checks:ro
 volumes:
   database:

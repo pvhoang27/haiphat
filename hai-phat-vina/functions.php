@@ -1,8 +1,8 @@
 <?php
 /** Hải Phát Vina theme bootstrap. */
 defined('ABSPATH') || exit;
-define('HPV_VERSION', '1.1.3');
-foreach (array('config', 'content', 'admin', 'contact', 'demo', 'editor') as $hpv_module) {
+define('HPV_VERSION', '2.0.0');
+foreach (array('config', 'content', 'admin', 'contact', 'demo', 'editor', 'patterns', 'migration') as $hpv_module) {
     require_once get_template_directory() . '/inc/' . $hpv_module . '.php';
 }
 
@@ -16,7 +16,7 @@ function hpv_setup() {
     add_theme_support('custom-logo', array('height' => 90, 'width' => 300, 'flex-width' => true, 'flex-height' => true));
     add_theme_support('editor-styles');
     add_theme_support('align-wide');
-    add_editor_style('assets/css/editor.css');
+    add_editor_style(wp_is_block_theme() ? 'assets/css/blocks.css' : 'assets/css/editor.css');
     register_nav_menus(array('primary' => 'Menu chính', 'footer' => 'Menu chân trang'));
     add_image_size('hpv-card', 760, 560, true);
     add_image_size('hpv-wide', 1440, 900, true);
@@ -25,7 +25,7 @@ add_action('after_setup_theme', 'hpv_setup');
 
 function hpv_assets() {
     wp_enqueue_style('hpv-theme', get_stylesheet_uri(), array(), HPV_VERSION);
-    wp_enqueue_style('hpv-main', get_template_directory_uri() . '/assets/css/main.css', array('hpv-theme'), HPV_VERSION);
+    wp_enqueue_style('hpv-main', get_template_directory_uri() . (wp_is_block_theme() ? '/assets/css/blocks.css' : '/assets/css/main.css'), array('hpv-theme'), HPV_VERSION);
     if (is_page_template('page-contact.php')) {
         wp_enqueue_style('hpv-contact', get_template_directory_uri() . '/assets/css/contact.css', array('hpv-main'), HPV_VERSION);
     }

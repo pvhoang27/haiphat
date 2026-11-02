@@ -29,10 +29,10 @@ def check(ok, message):
 
 for path in ['/', '/san-pham/', '/san-pham/mai-xep-luon-song/', '/nhom-san-pham/bat-hdpe/', '/gioi-thieu/', '/lien-he/', '/bao-gia/', '/ung-dung/', '/ung-dung/mai-che-quan-ca-phe/', '/kien-thuc/', '/chon-mai-che-cho-quan-ca-phe/', '/chinh-sach-bao-mat/']:
     code, body, _ = request(path)
-    check(code == 200 and '<h1' in body and not re.search(r'Warning:|Notice:|Fatal error:', body), f'Page renders cleanly: {path}')
+    check(code == 200 and len(re.findall(r'<h1(?:\s|>)', body)) == 1 and not re.search(r'Warning:|Notice:|Fatal error:', body), f'Page renders cleanly with one H1: {path}')
 
 code, body, _ = request('/this-page-does-not-exist/')
-check(code == 404 and 'Chúng ta tìm lại nhé' in body, 'Custom 404 page returns HTTP 404')
+check(code == 404 and 'Trang này không còn ở đây' in body, 'Custom 404 page returns HTTP 404')
 code, body, _ = request('/?s=HDPE&post_type=hpv_product')
 check(code == 200 and 'Bạt HDPE lót hồ' in body and 'Màng chống thấm HDPE' in body, 'Product search returns matching products')
 code, body, _ = request('/?s=QA-nothing-matches-uuid')

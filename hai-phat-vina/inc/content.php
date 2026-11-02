@@ -1,5 +1,6 @@
 <?php
 defined('ABSPATH') || exit;
+if (!function_exists('hpv_register_content')) {
 
 function hpv_register_content() {
     register_post_type('hpv_product', array(
@@ -17,9 +18,9 @@ function hpv_register_content() {
     ));
     register_post_type('hpv_request', array(
         'labels' => array('name' => 'Yêu cầu báo giá', 'singular_name' => 'Yêu cầu báo giá', 'edit_item' => 'Xem yêu cầu', 'all_items' => 'Yêu cầu đã nhận'),
-        'public' => false, 'publicly_queryable' => false, 'show_ui' => true, 'show_in_rest' => false, 'exclude_from_search' => true, 'show_in_nav_menus' => false, 'show_in_menu' => 'hpv-settings', 'supports' => array('title'), 'map_meta_cap' => true,
+        'public' => false, 'publicly_queryable' => false, 'show_ui' => true, 'show_in_rest' => false, 'exclude_from_search' => true, 'show_in_nav_menus' => false, 'can_export' => false, 'show_in_menu' => 'hpv-settings', 'supports' => array('title'), 'map_meta_cap' => true,
         'capability_type' => array('hpv_request', 'hpv_requests'),
-        'capabilities' => array('edit_post' => 'edit_hpv_request', 'read_post' => 'read_hpv_request', 'delete_post' => 'delete_hpv_request', 'edit_posts' => 'manage_options', 'edit_others_posts' => 'manage_options', 'publish_posts' => 'manage_options', 'read_private_posts' => 'manage_options', 'delete_posts' => 'manage_options', 'delete_private_posts' => 'manage_options', 'delete_published_posts' => 'manage_options', 'delete_others_posts' => 'manage_options', 'edit_private_posts' => 'manage_options', 'edit_published_posts' => 'manage_options', 'create_posts' => 'do_not_allow'),
+        'capabilities' => array('edit_post' => 'edit_hpv_request', 'read_post' => 'read_hpv_request', 'delete_post' => 'delete_hpv_request', 'read' => 'hpv_manage_business', 'edit_posts' => 'hpv_manage_business', 'edit_others_posts' => 'hpv_manage_business', 'publish_posts' => 'hpv_manage_business', 'read_private_posts' => 'hpv_manage_business', 'delete_posts' => 'hpv_manage_business', 'delete_private_posts' => 'hpv_manage_business', 'delete_published_posts' => 'hpv_manage_business', 'delete_others_posts' => 'hpv_manage_business', 'edit_private_posts' => 'hpv_manage_business', 'edit_published_posts' => 'hpv_manage_business', 'create_posts' => 'do_not_allow'),
     ));
 }
 add_action('init', 'hpv_register_content');
@@ -47,12 +48,12 @@ function hpv_project_meta_box($post) {
 
 function hpv_save_content_meta($post_id) {
     if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || wp_is_post_revision($post_id) || !current_user_can('edit_post', $post_id)) { return; }
-    if (get_post_type($post_id) === 'hpv_product' && isset($_POST['hpv_product_nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['hpv_product_nonce'])), 'hpv_save_product')) {
+    if (get_post_type($post_id) === 'hpv_product' && isset($_POST['hpv_product_nonce']) && is_string($_POST['hpv_product_nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['hpv_product_nonce'])), 'hpv_save_product')) {
         foreach (array('price', 'unit', 'material', 'application', 'warranty') as $key) {
             if (isset($_POST['hpv_' . $key]) && is_string($_POST['hpv_' . $key])) { update_post_meta($post_id, '_hpv_' . $key, sanitize_text_field(wp_unslash($_POST['hpv_' . $key]))); }
         }
     }
-    if (get_post_type($post_id) === 'hpv_project' && isset($_POST['hpv_project_nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['hpv_project_nonce'])), 'hpv_save_project')) {
+    if (get_post_type($post_id) === 'hpv_project' && isset($_POST['hpv_project_nonce']) && is_string($_POST['hpv_project_nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['hpv_project_nonce'])), 'hpv_save_project')) {
         update_post_meta($post_id, '_hpv_demo', isset($_POST['hpv_demo']) ? '1' : '0');
     }
 }
@@ -86,4 +87,4 @@ function hpv_archive_query($query) {
     if ($query->is_post_type_archive('hpv_project')) { $query->set('posts_per_page', 9); }
 }
 add_action('pre_get_posts', 'hpv_archive_query');
-add_filter('get_the_archive_title_prefix', '__return_empty_string');
+}
