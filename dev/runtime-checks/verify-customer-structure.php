@@ -11,10 +11,12 @@ $admin = get_user_by('login', 'hpv_check');
 wp_set_current_user($admin->ID);
 $wpdb->query('START TRANSACTION');
 try {
+    $draft_id = wp_insert_post(wp_slash(array('post_type' => 'page', 'post_status' => 'draft', 'post_name' => 'bat-xay-dung', 'post_title' => 'Bản nháp riêng', 'post_content' => 'Nội dung riêng đang soạn.')), true);
+    if (is_wp_error($draft_id)) { throw new RuntimeException($draft_id->get_error_message()); }
     $before_pages = array();
     foreach (hpv_customer_structure_pages() as $slug => $title) {
         $page = get_page_by_path($slug);
-        if ($page) { $before_pages[$slug] = array($page->ID, $page->post_content); }
+        if ($page && $page->post_status === 'publish' && $page->post_password === '') { $before_pages[$slug] = array($page->ID, $page->post_content); }
     }
     $front_id = (int) get_option('page_on_front');
     $front_content = get_post_field('post_content', $front_id);
@@ -31,6 +33,7 @@ try {
         hpv_structure_assert($page && $page->post_status === 'publish' && ($before_pages[$slug][1] ?? '') === $page->post_content, 'Existing page preserved or newly created blank: ' . $slug);
     }
     hpv_structure_assert(get_post_field('post_content', $front_id) === $front_content, 'Existing homepage remains unchanged');
+    hpv_structure_assert(get_post_status($draft_id) === 'draft' && get_post_field('post_content', $draft_id) === 'Nội dung riêng đang soạn.' && (int) $saved['pages']['bat-xay-dung'] !== (int) $draft_id, 'Existing draft stays private and a separate blank page is created');
     hpv_structure_assert(get_option('hpv_customer_structure_backup_v1')['header'] === $previous_header->content, 'Original header stored for recovery');
     $menu = get_post($saved['navigation']);
     foreach (array_slice(hpv_customer_structure_pages(), 0, 7, true) as $slug => $title) {

@@ -88,12 +88,14 @@ function hpv_setup_customer_structure() {
     $ids = array();
     foreach (hpv_customer_structure_pages() as $slug => $title) {
         $page = get_page_by_path($slug, OBJECT, 'page');
-        if ($page) {
-            if ($page->post_status !== 'publish' || $page->post_password !== '') { return new WP_Error('hpv_structure_page_private', 'Trang ' . $title . ' đã tồn tại nhưng chưa công khai; không tự thay đổi trạng thái.'); }
+        if ($page && $page->post_status === 'publish' && $page->post_password === '') {
             $ids[$slug] = (int) $page->ID;
             continue;
         }
-        $id = wp_insert_post(wp_slash(array('post_type' => 'page', 'post_status' => 'publish', 'post_title' => $title, 'post_name' => $slug, 'post_content' => '')), true);
+        // A draft/private/password-protected page may contain the customer's
+        // unfinished copy. Leave it untouched and create a separate blank page.
+        $new_slug = $page ? $slug . '-trang-moi' : $slug;
+        $id = wp_insert_post(wp_slash(array('post_type' => 'page', 'post_status' => 'publish', 'post_title' => $title, 'post_name' => $new_slug, 'post_content' => '')), true);
         if (is_wp_error($id)) { return $id; }
         $ids[$slug] = (int) $id;
     }
