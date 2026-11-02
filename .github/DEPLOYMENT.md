@@ -32,3 +32,13 @@ Deploy lại SHA đang healthy chỉ chạy health check. Retry một lần đã
 Pipeline không sync database từ local, không tạo tài khoản QA trên hosting và không ghi đè templates/styles/navigation đã được người dùng lưu. Tài khoản chủ website giữ Administrator; người vận hành có vai trò Quản lý website. Không tự đổi vai trò của tài khoản hiện có.
 
 File Word cho người dùng nằm ngoài repo. README trong repo chỉ dành cho kỹ thuật/vận hành.
+
+## Đồng bộ ngược thiết kế
+
+`.github/workflows/sync-design.yml` chạy ở phút 7/22/37/52 mỗi giờ, hoặc Run workflow trên `main`. Lịch GitHub có thể trễ; repository public không hoạt động trong thời gian dài cũng có thể bị GitHub tắt lịch, cần kiểm tra trạng thái workflow khi bảo trì.
+
+Workflow dùng cùng environment/secrets SSH và cùng concurrency group với deploy. Nó chạy CLI xuất nguồn qua stdin, không tạo endpoint web hoặc đặt GitHub token trên hosting. Chỉ đọc thiết kế đã công khai, xác thực đường dẫn/metadata rồi cập nhật `site-design/current/` qua nhánh riêng. Nhánh này dành cho tự động hóa; chỉnh code trên nhánh khác. Không có force-push, auto-approve hoặc auto-merge.
+
+Trong Settings → Actions → General cần bật **Allow GitHub Actions to create and approve pull requests** để token Actions tạo PR. Quyền mặc định vẫn `read`; chỉ workflow đồng bộ xin `contents: write` và `pull-requests: write`. GitHub gom tạo và duyệt PR trong cùng một setting, nhưng workflow này không duyệt PR. PR do bot tạo có thể cần người có quyền write bấm Approve workflows to run để chạy bộ kiểm thử PR; bản xuất luôn được validator kiểm tra ngay trong workflow đồng bộ. Merge vào `main` vẫn chạy CI đầy đủ trước deploy.
+
+Nếu nguồn không đổi, workflow không tạo commit. Trang unpublish/xóa biến mất khỏi snapshot hiện tại ở lần chạy kế tiếp; bản cũ vẫn còn trong Git history. Snapshot là nguồn thiết kế để review/khôi phục thủ công, không tự nhập lại lên website. Việc đồng bộ không bao gồm bài viết, dữ liệu khách hoặc file ảnh. Chi tiết tại `site-design/README.md`.

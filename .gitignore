@@ -20,3 +20,5 @@ wp-config.php
 Thumbs.db
 /.aws/
 /.codex/
+__pycache__/
+*.pyc

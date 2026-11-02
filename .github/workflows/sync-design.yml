@@ -1,0 +1,62 @@
+name: Sync WordPress design
+
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+
+# Share the production deployment lock: never export during a code/DB migration.
+concurrency:
+  group: hai-phat-vina-production
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+      THEME_PATH: ${{ secrets.THEME_PATH }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Configure existing SSH access
+        env:
+          DEPLOY_PRIVATE_KEY: ${{ secrets.DEPLOY_PRIVATE_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST" && test -n "$DEPLOY_USER"
+          [[ "$DEPLOY_PORT" =~ ^[0-9]+$ ]]
+          THEME_PATH="${THEME_PATH%/}"
+          [[ "$THEME_PATH" =~ ^/[a-zA-Z0-9_./-]+/wp-content/themes/hai-phat-vina$ && "$THEME_PATH" != *..* ]]
+          printf 'WP_ROOT=%s\n' "${THEME_PATH%/wp-content/themes/hai-phat-vina}" >> "$GITHUB_ENV"
+          test -n "$DEPLOY_PRIVATE_KEY" && test -n "$DEPLOY_KNOWN_HOSTS"
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_PRIVATE_KEY" > ~/.ssh/haiphat_design
+          chmod 600 ~/.ssh/haiphat_design
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      - name: Read published design sources from WordPress
+        run: |
+          set -euo pipefail
+          # Run the trusted CLI wrapper from this checkout over stdin; no upload,
+          # public endpoint or GitHub credential on the WordPress server.
+          ssh -i ~/.ssh/haiphat_design -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            "php -- '$WP_ROOT'" < dev/deploy/export-design.php > "$RUNNER_TEMP/wordpress-design.json"
+      - name: Validate sources and create or update design PR
+        run: bash dev/sync-design.sh "$RUNNER_TEMP/wordpress-design.json"
+      - name: Remove temporary credentials and export
+        if: always()
+        run: rm -f ~/.ssh/haiphat_design "$RUNNER_TEMP/wordpress-design.json"
