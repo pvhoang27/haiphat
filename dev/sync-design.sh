@@ -34,6 +34,7 @@ hpv_pr="$(gh pr list --state open --base main --head "$hpv_branch" --json number
 if [ -z "$hpv_pr" ]; then
   gh pr create --base main --head "$hpv_branch" --title "$hpv_pr_title" --body-file .github/design-sync-pr.md
 else
-  gh pr edit "$hpv_pr" --title "$hpv_pr_title"
+  # REST avoids gh CLI's deprecated Projects Classic GraphQL fields.
+  gh api --method PATCH "repos/${GITHUB_REPOSITORY:?}/pulls/$hpv_pr" -f title="$hpv_pr_title" --silent
   printf 'Updated design PR #%s\n' "$hpv_pr"
 fi
