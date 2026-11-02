@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: hai-phat-vina-production
+  group: hai-phat-vina-${{ github.ref == 'refs/heads/main' && 'production' || github.ref }}
   cancel-in-progress: false
 
 permissions:
