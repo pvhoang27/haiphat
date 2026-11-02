@@ -1,0 +1,94 @@
+name: Test and deploy WordPress theme
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: hai-phat-vina-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Check theme
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check PHP syntax
+        run: find hai-phat-vina -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Verify required theme files
+        run: |
+          test -f hai-phat-vina/style.css
+          test -f hai-phat-vina/functions.php
+          test -f hai-phat-vina/index.php
+
+  deploy:
+    name: Deploy production theme
+    needs: test
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+      THEME_PATH: ${{ secrets.THEME_PATH }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate deployment configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_PORT"
+          test -n "$THEME_PATH"
+          [[ "$DEPLOY_PORT" =~ ^[0-9]+$ ]]
+          [[ "$THEME_PATH" =~ /wp-content/themes/hai-phat-vina/?$ ]]
+
+      - name: Configure SSH
+        shell: bash
+        env:
+          DEPLOY_PRIVATE_KEY: ${{ secrets.DEPLOY_PRIVATE_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_PRIVATE_KEY"
+          test -n "$DEPLOY_KNOWN_HOSTS"
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_PRIVATE_KEY" > ~/.ssh/haiphat_deploy
+          chmod 600 ~/.ssh/haiphat_deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Verify destination
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/haiphat_deploy -p "$DEPLOY_PORT" \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "test -d '$THEME_PATH' && test -f '$THEME_PATH/style.css'"
+
+      - name: Deploy theme
+        shell: bash
+        run: |
+          set -euo pipefail
+          rsync --archive --compress --delete-delay --delay-updates \
+            --exclude='.git/' \
+            --exclude='.DS_Store' \
+            -e "ssh -i ~/.ssh/haiphat_deploy -p $DEPLOY_PORT -o BatchMode=yes -o StrictHostKeyChecking=yes" \
+            hai-phat-vina/ "$DEPLOY_USER@$DEPLOY_HOST:$THEME_PATH/"
+
+      - name: Remove deployment key
+        if: always()
+        run: rm -f ~/.ssh/haiphat_deploy
