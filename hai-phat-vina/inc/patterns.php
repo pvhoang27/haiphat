@@ -224,6 +224,10 @@ function hpv_site_patterns() {
         hpv_pattern_group(array(hpv_pattern_block('hpv/company-info', array('layout' => 'bank'))), 'hpv-footer-bank', '', array('align' => 'wide', 'layout' => array('type' => 'default'))),
         hpv_pattern_group(array(hpv_pattern_paragraph('© Hải Phát Vina.'), hpv_pattern_paragraph('Thông tin quy cách và giá được xác nhận theo yêu cầu thực tế.')), 'hpv-footer-bottom', '', array('align' => 'wide', 'layout' => array('type' => 'flex', 'flexWrap' => 'wrap', 'justifyContent' => 'space-between'))),
     ), 'hpv-site-footer', 'Chân trang', array('align' => 'full'));
+    $customer_structure = get_option('hpv_customer_structure_v1');
+    if (is_array($customer_structure) && !empty($customer_structure['pages']) && function_exists('hpv_customer_footer_markup')) {
+        $patterns['footer'] = hpv_customer_footer_markup($customer_structure['pages']);
+    }
 
     $hero_attributes = array('url' => $hero_image['url'], 'alt' => $hero_image['alt'], 'dimRatio' => 60, 'overlayColor' => 'forest', 'isUserOverlayColor' => true, 'minHeight' => 640, 'minHeightUnit' => 'px', 'align' => 'full', 'className' => 'hpv-hero', 'metadata' => array('name' => 'Ảnh bìa và tiêu đề trang chủ'));
     if ($hero_image['id']) { $hero_attributes['id'] = $hero_image['id']; }

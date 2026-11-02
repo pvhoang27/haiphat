@@ -20,6 +20,7 @@ SSH, rsync, bash, flock, PHP CLI 7.4+ với mysqli và WordPress 6.6+. Tài kho�
 2. Khóa deploy, bật maintenance, sao lưu các bảng theo table prefix của website. SQL và trạng thái được giữ ở `haiphat-deploy-backups/<sha>` bên ngoài document root; quyền thư mục 0700, SQL 0600. Code cũ nằm tại staging `<sha>/previous-code` (0700) trên cùng filesystem để rename an toàn.
 3. Đổi thư mục theme/plugin bằng rename, giữ bản trước để rollback.
 4. Kích hoạt Core qua WordPress API. Nếu chưa chuyển sang block, chuyển trang hiện có một lần; không chạy demo seeder trên production.
+   Lần đầu cập nhật sơ đồ khách yêu cầu, hệ thống tạo các Trang còn thiếu với nội dung trống, tạo menu mới và sắp xếp footer. Trang có sẵn được giữ nguyên; header/footer cũ được lưu trong option `hpv_customer_structure_backup_v1` và bản SQL. Nếu một trang trùng slug đang là nháp/riêng tư/có mật khẩu, deploy dừng và rollback, không tự công khai trang đó. Những lần deploy sau không chạy lại bước này.
 5. Flush cache/rewrite, tắt maintenance và kiểm tra homepage HTTP cùng các marker của theme mới.
 6. Nếu lỗi sau backup, khôi phục code và SQL. Không xóa bản deploy lỗi hoặc bản backup; uploads mới không bị xóa khi rollback.
 

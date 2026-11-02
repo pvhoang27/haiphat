@@ -57,6 +57,7 @@ jobs:
           docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-site-identity.php
           docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-editable-blocks.php
           docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-design-export.php
+          docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-customer-structure.php
       - name: Verify legacy upgrade, repeat deployment and automatic rollback
         run: bash dev/verify-deployment.sh
       - name: Stop disposable test services
