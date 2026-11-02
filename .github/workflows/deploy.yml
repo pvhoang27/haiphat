@@ -34,7 +34,7 @@ jobs:
           set -euo pipefail
           docker compose -f dev/compose.yaml up -d
           for attempt in $(seq 1 60); do
-            if docker compose -f dev/compose.yaml exec -T wordpress php -r 'exit(is_file("/var/www/html/wp-load.php") ? 0 : 1);'; then exit 0; fi
+            if docker compose -f dev/compose.yaml exec -T wordpress php -r 'exit(is_file("/var/www/html/wp-config.php") ? 0 : 1);' && curl --silent --output /dev/null http://127.0.0.1:8787/; then exit 0; fi
             sleep 2
           done
           exit 1

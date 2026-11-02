@@ -1,4 +1,6 @@
 <?php
+$_SERVER['HTTP_HOST'] = '127.0.0.1:8787';
+$_SERVER['REQUEST_METHOD'] = 'GET';
 require '/var/www/html/wp-load.php';
 if (get_option('home') !== 'http://127.0.0.1:8787') { throw new RuntimeException('Run only on the local QA site.'); }
 $admin = get_user_by('login', 'hpv_check');

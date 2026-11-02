@@ -1,5 +1,7 @@
 <?php
 /** Disposable local environment only; never ship in either installable ZIP. */
+$_SERVER['HTTP_HOST'] = '127.0.0.1:8787';
+$_SERVER['REQUEST_METHOD'] = 'GET';
 require '/var/www/html/wp-load.php';
 require_once ABSPATH . 'wp-admin/includes/plugin.php';
 $result = activate_plugin('hai-phat-vina-core/hai-phat-vina-core.php');
