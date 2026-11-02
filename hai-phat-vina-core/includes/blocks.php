@@ -56,7 +56,7 @@ function hpv_render_company_info($attributes) {
         <?php endfor; ?>
         </div>
     <?php elseif ($layout === 'bank') : ?>
-        <dl><div><dt><?php echo esc_html(hpv_block_label($attributes, 'bankLabel', 'Ngân hàng')); ?></dt><dd><?php echo esc_html(hpv_get('bank_name')); ?></dd></div><div><dt><?php echo esc_html(hpv_block_label($attributes, 'ownerLabel', 'Chủ tài khoản')); ?></dt><dd><?php echo esc_html(hpv_get('legal_name')); ?></dd></div><div><dt><?php echo esc_html(hpv_block_label($attributes, 'accountLabel', 'Số tài khoản')); ?></dt><dd><strong><?php echo esc_html(hpv_get('bank_account')); ?></strong></dd></div></dl>
+        <dl><div><dt><?php echo esc_html(hpv_block_label($attributes, 'bankLabel', 'Ngân hàng')); ?></dt><dd><?php echo esc_html(hpv_get('bank_name')); ?></dd></div><div><dt><?php echo esc_html(hpv_block_label($attributes, 'ownerLabel', 'Chủ tài khoản')); ?></dt><dd><?php echo esc_html(hpv_get('legal_name')); ?></dd></div><div><dt><?php echo esc_html(hpv_block_label($attributes, 'accountLabel', 'Số tài khoản')); ?></dt><dd><strong><?php echo esc_html(hpv_get('bank_account')); ?></strong><?php if (function_exists('hpv_icon') && hpv_get('bank_account')) : ?> <button type="button" class="hpv-copy-account" data-copy="<?php echo esc_attr(hpv_get('bank_account')); ?>" aria-label="Sao chép số tài khoản"><?php echo hpv_icon('copy'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted theme icon. ?></button><span class="copy-status screen-reader-text" role="status" aria-live="polite"></span><?php endif; ?></dd></div></dl>
         <p><small><?php echo esc_html(hpv_block_label($attributes, 'paymentNote', 'Vui lòng xác nhận thông tin thanh toán qua hotline trước khi chuyển khoản.')); ?></small></p>
     <?php elseif ($layout === 'footer') : ?>
         <p><strong><?php echo esc_html(hpv_get('legal_name')); ?></strong></p>
@@ -112,7 +112,9 @@ function hpv_render_product_specs($attributes, $content, $block) {
 
 function hpv_render_floating_contact($attributes) {
     $phone_label = str_replace('{phone}', hpv_get('phone'), hpv_block_label($attributes, 'phoneLabel', 'Gọi {phone}'));
-    return '<nav ' . get_block_wrapper_attributes(array('class' => 'hpv-contact-dock')) . ' aria-label="Liên hệ nhanh"><a href="' . esc_url(hpv_zalo_url()) . '" target="_blank" rel="noopener noreferrer">' . esc_html(hpv_block_label($attributes, 'zaloLabel', 'Chat Zalo')) . '</a><a href="' . esc_url(hpv_phone_url()) . '">' . esc_html($phone_label) . '</a></nav>';
+    $chat_icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.8 7.5 8 8 0 0 1-3.1-.7L4 20l1.5-4.2A7.5 7.5 0 1 1 20 11.5Z"/><path d="M8.5 11.5h7"/></svg>';
+    $phone_icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.6 3.5 9 3l2 4.4-1.7 1.5a14 14 0 0 0 5.8 5.8l1.5-1.7 4.4 2-.5 2.4a2.5 2.5 0 0 1-2.6 2C10.7 18.7 5.3 13.3 4.6 6.1a2.5 2.5 0 0 1 2-2.6Z"/></svg>';
+    return '<nav ' . get_block_wrapper_attributes(array('class' => 'hpv-contact-dock')) . ' aria-label="Liên hệ nhanh"><a href="' . esc_url(hpv_zalo_url()) . '" target="_blank" rel="noopener noreferrer">' . $chat_icon . '<span>' . esc_html(hpv_block_label($attributes, 'zaloLabel', 'Chat Zalo')) . '</span></a><a href="' . esc_url(hpv_phone_url()) . '">' . $phone_icon . '<span>' . esc_html($phone_label) . '</span></a></nav>';
 }
 
 function hpv_render_article_toc($attributes) {

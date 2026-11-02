@@ -68,10 +68,47 @@ function hpv_customer_footer_markup($ids) {
             array(hpv_pattern_heading('Thông tin công ty', 2), hpv_pattern_block('hpv/company-info', array('layout' => 'footer'))),
             array(hpv_pattern_heading('Danh mục sản phẩm chính', 2), hpv_pattern_group($footer_products, 'hpv-footer-links')),
             array(hpv_pattern_heading('Chính sách', 2), hpv_pattern_group($policies, 'hpv-footer-links')),
-            array(hpv_pattern_heading('Danh sách chi nhánh', 2), hpv_pattern_paragraph(hpv_pattern_link('Xem danh sách chi nhánh', get_permalink($ids['danh-sach-chi-nhanh']))), hpv_pattern_block('hpv/company-info', array('layout' => 'branches'))),
+            array(hpv_pattern_heading('Danh sách chi nhánh', 2), hpv_pattern_paragraph(hpv_pattern_link('Xem danh sách chi nhánh', get_permalink($ids['danh-sach-chi-nhanh'])))),
         ), 'hpv-footer-grid')), '', '', array('align' => 'wide', 'layout' => array('type' => 'default'))),
         hpv_pattern_group(array(hpv_pattern_paragraph('© Hải Phát Vina.')), 'hpv-footer-bottom', '', array('align' => 'wide', 'layout' => array('type' => 'flex'))),
     ), 'hpv-site-footer', 'Chân trang', array('align' => 'full'));
+}
+
+/** Remove only the long generated branch list, preserving all other footer edits. */
+function hpv_compact_footer_blocks($blocks, &$removed) {
+    $result = array();
+    foreach ($blocks as $block) {
+        if ($block['blockName'] === 'hpv/company-info' && isset($block['attrs']['layout']) && $block['attrs']['layout'] === 'branches') { $removed++; continue; }
+        if (!empty($block['innerBlocks'])) {
+            $new_children = array(); $new_content = array(); $index = 0;
+            foreach ($block['innerContent'] as $part) {
+                if ($part !== null) { $new_content[] = $part; continue; }
+                $child = $block['innerBlocks'][$index++];
+                $kept = hpv_compact_footer_blocks(array($child), $removed);
+                if ($kept) { $new_children[] = $kept[0]; $new_content[] = null; }
+            }
+            $block['innerBlocks'] = $new_children; $block['innerContent'] = $new_content;
+        }
+        $result[] = $block;
+    }
+    return $result;
+}
+
+function hpv_compact_customer_footer() {
+    if (get_option('hpv_compact_footer_v1')) { return true; }
+    $footer = get_block_template(get_stylesheet() . '//footer', 'wp_template_part');
+    if (!$footer) { return new WP_Error('hpv_footer_missing', 'Không tìm thấy chân trang để thu gọn.'); }
+    $removed = 0;
+    $blocks = parse_blocks($footer->content);
+    if (empty($footer->wp_id)) { $blocks = resolve_pattern_blocks($blocks); }
+    $source = serialize_blocks(hpv_compact_footer_blocks($blocks, $removed));
+    if ($removed) {
+        update_option('hpv_compact_footer_backup_v1', array('content' => $footer->content, 'post_id' => $footer->wp_id), false);
+        $saved = hpv_customer_save_part('footer', 'Chân trang', $source);
+        if (is_wp_error($saved)) { return $saved; }
+    }
+    update_option('hpv_compact_footer_v1', 1, false);
+    return true;
 }
 
 function hpv_setup_customer_structure() {

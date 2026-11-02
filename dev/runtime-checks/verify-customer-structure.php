@@ -51,6 +51,14 @@ try {
         hpv_structure_assert(strpos($footer->content, $text) !== false, 'Footer contains requested section: ' . $text);
     }
     hpv_structure_assert(strpos(hpv_site_patterns()['footer'], 'Danh mục sản phẩm chính') !== false, 'Resetting footer restores requested default structure');
+    $with_branches = $footer->content . '<!-- wp:paragraph --><p>Liên kết khách tự thêm.</p><!-- /wp:paragraph --><!-- wp:hpv/company-info {"layout":"branches"} /-->';
+    wp_update_post(wp_slash(array('ID' => $saved['footer'], 'post_content' => $with_branches)));
+    $compact = hpv_compact_customer_footer();
+    if (is_wp_error($compact)) { throw new RuntimeException($compact->get_error_message()); }
+    $compact_footer = get_post_field('post_content', $saved['footer']);
+    hpv_structure_assert(strpos($compact_footer, 'Liên kết khách tự thêm') !== false && strpos($compact_footer, '"layout":"branches"') === false && strpos($compact_footer, 'Xem danh sách chi nhánh') !== false, 'Compact footer removes only branch list and keeps client links');
+    hpv_structure_assert(get_option('hpv_compact_footer_backup_v1')['content'] === $with_branches, 'Previous footer source saved before compacting');
+    hpv_structure_assert(hpv_compact_customer_footer() === true && get_post_field('post_content', $saved['footer']) === $compact_footer, 'Repeated deployments do not rewrite customer footer');
     $editable = $saved['pages']['bat-xay-dung'];
     wp_update_post(wp_slash(array('ID' => $editable, 'post_content' => '<!-- wp:paragraph --><p>Nội dung khách tự viết.</p><!-- /wp:paragraph -->')));
     $new_header = $header->content . '<!-- wp:paragraph --><p>Khách chỉnh đầu trang.</p><!-- /wp:paragraph -->';

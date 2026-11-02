@@ -1,7 +1,7 @@
 <?php
 /** Hải Phát Vina theme bootstrap. */
 defined('ABSPATH') || exit;
-define('HPV_VERSION', '2.0.0');
+define('HPV_VERSION', '2.0.1');
 foreach (array('config', 'content', 'admin', 'contact', 'demo', 'editor', 'patterns', 'migration', 'site-structure') as $hpv_module) {
     require_once get_template_directory() . '/inc/' . $hpv_module . '.php';
 }
@@ -59,3 +59,12 @@ function hpv_head_metadata() {
     }
 }
 add_action('wp_head', 'hpv_head_metadata', 5);
+
+/** TOC+ is useful for articles, but not the layout of these two landing pages. */
+function hpv_disable_toc_on_company_pages($content) {
+    if (is_page(array('gioi-thieu', 'lien-he')) && in_the_loop() && is_main_query() && shortcode_exists('no_toc')) {
+        do_shortcode('[no_toc]');
+    }
+    return $content;
+}
+add_filter('the_content', 'hpv_disable_toc_on_company_pages', 9);
