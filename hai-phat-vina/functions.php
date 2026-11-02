@@ -1,7 +1,7 @@
 <?php
 /** Hải Phát Vina theme bootstrap. */
 defined('ABSPATH') || exit;
-define('HPV_VERSION', '1.1.2');
+define('HPV_VERSION', '1.1.3');
 foreach (array('config', 'content', 'admin', 'contact', 'demo', 'editor') as $hpv_module) {
     require_once get_template_directory() . '/inc/' . $hpv_module . '.php';
 }
@@ -26,6 +26,9 @@ add_action('after_setup_theme', 'hpv_setup');
 function hpv_assets() {
     wp_enqueue_style('hpv-theme', get_stylesheet_uri(), array(), HPV_VERSION);
     wp_enqueue_style('hpv-main', get_template_directory_uri() . '/assets/css/main.css', array('hpv-theme'), HPV_VERSION);
+    if (is_page_template('page-contact.php')) {
+        wp_enqueue_style('hpv-contact', get_template_directory_uri() . '/assets/css/contact.css', array('hpv-main'), HPV_VERSION);
+    }
     wp_enqueue_script('hpv-main', get_template_directory_uri() . '/assets/js/main.js', array(), HPV_VERSION, true);
     wp_add_inline_script('hpv-main', 'window.hpvConfig = ' . wp_json_encode(array('ajaxUrl' => admin_url('admin-ajax.php'))) . ';', 'before');
     if (is_singular() && comments_open() && get_option('thread_comments')) {
