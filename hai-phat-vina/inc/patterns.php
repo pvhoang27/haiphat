@@ -185,7 +185,7 @@ function hpv_site_patterns() {
     $about_image = hpv_pattern_image_data('about_image', 'tarpaulin', 'Ảnh minh họa bạt nhựa và cuộn vật liệu');
 
     $brand = hpv_pattern_group(array(
-        hpv_pattern_block('core/site-logo', array('width' => 220, 'shouldSyncIcon' => false)),
+        hpv_pattern_block('core/site-logo', array('width' => 320, 'shouldSyncIcon' => false)),
     ), 'hpv-brand', '', array('layout' => array('type' => 'flex', 'flexWrap' => 'nowrap')));
     $patterns['header'] = hpv_pattern_group(array(
         hpv_pattern_group(array(hpv_pattern_group(array(

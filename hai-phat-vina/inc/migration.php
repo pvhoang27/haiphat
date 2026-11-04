@@ -209,3 +209,25 @@ function hpv_illustration_block_caption($content, $block, $instance) {
     return $content;
 }
 add_filter('render_block_core/post-featured-image', 'hpv_illustration_block_caption', 10, 3);
+
+/** Customer-approved horizontal identity; remains editable in the Site Editor. */
+function hpv_use_horizontal_logo() {
+    if (get_option('hpv_horizontal_logo_v1')) { return true; }
+    require_once ABSPATH . 'wp-admin/includes/image.php';
+    $id = (int) get_option('hpv_horizontal_logo_id');
+    if (!$id || get_post_type($id) !== 'attachment') {
+        $file = get_template_directory() . '/assets/brand/hai-phat-vina-logo-ngang.png';
+        $upload = wp_upload_bits('hai-phat-vina-logo-ngang.png', null, file_get_contents($file));
+        if (!empty($upload['error'])) { return new WP_Error('hpv_logo_upload', $upload['error']); }
+        $id = wp_insert_attachment(array('post_title' => 'Logo ngang Hải Phát Vina', 'post_mime_type' => 'image/png', 'post_status' => 'inherit'), $upload['file'], 0, true);
+        if (is_wp_error($id)) { return $id; }
+        update_post_meta($id, '_wp_attachment_image_alt', 'Hải Phát Vina');
+        wp_update_attachment_metadata($id, wp_generate_attachment_metadata($id, $upload['file']));
+        update_option('hpv_horizontal_logo_id', $id, false);
+    }
+    update_option('hpv_previous_logo_v1', array('site_logo' => get_option('site_logo'), 'custom_logo' => get_theme_mod('custom_logo')), false);
+    update_option('site_logo', $id);
+    set_theme_mod('custom_logo', $id);
+    update_option('hpv_horizontal_logo_v1', 1, false);
+    return true;
+}

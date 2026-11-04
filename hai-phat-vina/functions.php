@@ -1,7 +1,7 @@
 <?php
 /** Hải Phát Vina theme bootstrap. */
 defined('ABSPATH') || exit;
-define('HPV_VERSION', '2.0.3');
+define('HPV_VERSION', '2.0.4');
 foreach (array('config', 'content', 'admin', 'contact', 'demo', 'editor', 'patterns', 'migration', 'site-structure') as $hpv_module) {
     require_once get_template_directory() . '/inc/' . $hpv_module . '.php';
 }

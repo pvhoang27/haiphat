@@ -417,7 +417,7 @@ body.page .hpv-full-width-page:has(.hpv-contact-page) .hpv-full-width-title h1 {
 
 /* Keep the uploaded logo readable, including existing saved headers. */
 .wp-site-blocks .hpv-brand-copy { display: none; }
-.wp-site-blocks .hpv-brand .wp-block-site-logo img { width: 220px; max-width: 100%; max-height: 80px; }
+.wp-site-blocks .hpv-brand .wp-block-site-logo img { width: 320px; height: auto; max-width: 100%; max-height: 80px; }
 .hpv-footer-contact-list { display: grid; gap: 10px; margin-top: 14px; }
 .hpv-footer-contact-list > a { display: flex; align-items: center; gap: 10px; }
 .hpv-footer-contact-list :where(svg, .hpv-zalo-mark) { flex: 0 0 20px; width: 20px; height: 20px; }
@@ -436,7 +436,7 @@ body.page .hpv-full-width-page:has(.hpv-contact-page) .hpv-full-width-title h1 {
   .wp-site-blocks .hpv-header-inner .wp-block-navigation__responsive-container-close { display: grid; place-items: center; width: 44px; height: 44px; position: fixed; top: calc(12px + var(--wp-admin--admin-bar--height, 0px)); right: 24px; }
 }
 @media (max-width: 600px) {
-  .wp-site-blocks .hpv-brand .wp-block-site-logo img { width: 190px; max-height: 64px; }
+  .wp-site-blocks .hpv-brand .wp-block-site-logo img { width: 250px; height: auto; max-width: 100%; max-height: 64px; }
 }
 
 /* Footer: contact first, navigation second, locations on their own readable row. */
@@ -501,4 +501,32 @@ body.page .hpv-full-width-page:has(.hpv-contact-page) .hpv-full-width-title h1 {
 @media (max-width: 480px) {
   :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-site-footer .hpv-footer-grid > .wp-block-column:nth-child(2) > .wp-block-heading,
   :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-site-footer .hpv-footer-grid > .wp-block-column:nth-child(3) > .wp-block-heading { min-height: 45px; }
+}
+
+/* Saved Site Logo blocks can still carry the previous 64px width. */
+.wp-site-blocks .hpv-brand .wp-block-site-logo,
+.wp-site-blocks .hpv-brand .custom-logo-link { width: auto; max-width: 100%; }
+
+/* Compact masthead: a full wordmark and a balanced navigation group. */
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-header-inner {
+  max-width: 1120px;
+  min-height: 88px;
+  padding-block: 6px;
+  gap: 28px;
+  justify-content: flex-start;
+}
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-topbar > .wp-block-group { max-width: 1120px; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-header-inner > .wp-block-navigation { margin-left: auto; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-header-phone { padding-left: 22px; }
+@media (max-width: 1050px) {
+  .wp-site-blocks .hpv-header-inner { min-height: 76px; padding-block: 4px; gap: 16px; }
+}
+@media (max-width: 600px) {
+  .wp-site-blocks .hpv-header-inner { min-height: 70px; }
+  .wp-site-blocks .hpv-brand { max-width: calc(100% - 60px); }
+}
+.wp-site-blocks .hpv-site-header .hpv-header-inner { max-width: 1120px; }
+@media (min-width: 1051px) {
+  .wp-site-blocks .hpv-header-inner { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; }
+  .wp-site-blocks .hpv-header-inner > .wp-block-navigation { margin-left: 0; justify-self: center; }
 }
