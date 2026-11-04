@@ -36,62 +36,6 @@
             "posts_page": false
         },
         {
-            "file": "pages/43.html",
-            "path": "bat-xay-dung",
-            "title": "Bạt xây dựng",
-            "template": "default",
-            "front_page": false,
-            "posts_page": false
-        },
-        {
-            "file": "pages/44.html",
-            "path": "bat-xanh-cam",
-            "title": "Bạt xanh cam",
-            "template": "default",
-            "front_page": false,
-            "posts_page": false
-        },
-        {
-            "file": "pages/45.html",
-            "path": "bat-che-nang-mua",
-            "title": "Bạt che nắng mưa",
-            "template": "default",
-            "front_page": false,
-            "posts_page": false
-        },
-        {
-            "file": "pages/46.html",
-            "path": "bat-lot-nong-nghiep",
-            "title": "Bạt lót nông nghiệp",
-            "template": "default",
-            "front_page": false,
-            "posts_page": false
-        },
-        {
-            "file": "pages/47.html",
-            "path": "bat-lot-ao-ho",
-            "title": "Bạt lót ao hồ",
-            "template": "default",
-            "front_page": false,
-            "posts_page": false
-        },
-        {
-            "file": "pages/48.html",
-            "path": "luoi-cong-trinh",
-            "title": "Lưới công trình",
-            "template": "default",
-            "front_page": false,
-            "posts_page": false
-        },
-        {
-            "file": "pages/49.html",
-            "path": "o-du-che-nang",
-            "title": "Ô dù che nắng",
-            "template": "default",
-            "front_page": false,
-            "posts_page": false
-        },
-        {
             "file": "pages/50.html",
             "path": "kien-thuc",
             "title": "Kiến thức",
@@ -101,7 +45,7 @@
         },
         {
             "file": "pages/51.html",
-            "path": "chinh-sach-bao-mat-trang-moi",
+            "path": "chinh-sach-bao-mat",
             "title": "Chính sách bảo mật",
             "template": "default",
             "front_page": false,
