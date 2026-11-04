@@ -182,6 +182,8 @@ try {
             $restored = hpv_restore_customer_footer_branches();
             if (is_wp_error($restored)) { throw new RuntimeException($restored->get_error_message()); }
         }
+        $corrected = hpv_correct_customer_structure();
+        if (is_wp_error($corrected)) { throw new RuntimeException($corrected->get_error_message()); }
         update_option('hpv_deployed_revision', $revision, false);
         wp_clean_themes_cache(true);
         flush_rewrite_rules();

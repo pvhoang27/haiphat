@@ -212,3 +212,62 @@ function hpv_setup_customer_structure() {
     update_option('hpv_customer_structure_v1', array('pages' => $ids, 'navigation' => (int) $menu_id, 'header' => (int) $saved_header, 'footer' => (int) $saved_footer), false);
     return true;
 }
+
+/** Apply the customer's corrections once, retaining content, IDs and revisions. */
+function hpv_correct_customer_structure() {
+    if (get_option('hpv_customer_corrections_v1')) { return true; }
+    $structure = get_option('hpv_customer_structure_v1');
+    if (empty($structure['pages'])) { return new WP_Error('hpv_structure_missing', 'Thiếu cấu trúc trang cần sửa.'); }
+    $replacements = array();
+    foreach (array_slice(hpv_customer_structure_pages(), 0, 7, true) as $slug => $title) {
+        $id = isset($structure['pages'][$slug]) ? (int) $structure['pages'][$slug] : 0;
+        $post = get_post($id);
+        if (!$post || !in_array($post->post_type, array('page', 'hpv_product'), true)) { return new WP_Error('hpv_product_missing', 'Không tìm thấy sản phẩm: ' . $title); }
+        $old_url = get_permalink($id);
+        if ($post->post_type === 'page') {
+            wp_save_post_revision($id);
+            $saved = wp_update_post(array('ID' => $id, 'post_type' => 'hpv_product'), true);
+            if (is_wp_error($saved)) { return $saved; }
+        }
+        $replacements[$old_url] = get_permalink($id);
+    }
+    $privacy_id = (int) $structure['pages']['chinh-sach-bao-mat'];
+    $privacy = get_post($privacy_id);
+    if (!$privacy || $privacy->post_type !== 'page') { return new WP_Error('hpv_privacy_missing', 'Không tìm thấy trang bảo mật.'); }
+    $old_url = get_permalink($privacy_id);
+    $occupied = get_page_by_path('chinh-sach-bao-mat', OBJECT, 'page');
+    if ($occupied && (int) $occupied->ID !== $privacy_id) {
+        // Keep unfinished copy intact under a draft-specific slug.
+        if (!in_array($occupied->post_status, array('draft', 'pending', 'auto-draft', 'trash'), true)) { return new WP_Error('hpv_privacy_conflict', 'URL bảo mật đang thuộc một trang khác; cần kiểm tra nội dung.'); }
+        $saved = wp_update_post(array('ID' => $occupied->ID, 'post_name' => 'chinh-sach-bao-mat-ban-nhap-' . $occupied->ID), true);
+        if (is_wp_error($saved)) { return $saved; }
+    }
+    $saved = wp_update_post(array('ID' => $privacy_id, 'post_name' => 'chinh-sach-bao-mat'), true);
+    if (is_wp_error($saved)) { return $saved; }
+    $replacements[$old_url] = get_permalink($privacy_id);
+    // Only update URLs and product link types; retain other customer layout edits.
+    $sources = get_posts(array('post_type' => array('wp_navigation', 'wp_template_part'), 'post_status' => 'publish', 'numberposts' => -1));
+    foreach ($sources as $source) {
+        $blocks = parse_blocks($source->post_content);
+        hpv_correct_customer_links($blocks, $structure['pages']);
+        $content = strtr(serialize_blocks($blocks), $replacements);
+        if ($content === $source->post_content) { continue; }
+        wp_save_post_revision($source->ID);
+        $saved = wp_update_post(wp_slash(array('ID' => $source->ID, 'post_content' => $content)), true);
+        if (is_wp_error($saved)) { return $saved; }
+    }
+    update_option('hpv_customer_corrections_v1', 1, false);
+    return true;
+}
+
+function hpv_correct_customer_links(&$blocks, $pages) {
+    $product_ids = array_map('intval', array_values(array_slice($pages, 0, 7, true)));
+    foreach ($blocks as &$block) {
+        if ($block['blockName'] === 'core/navigation-link' && !empty($block['attrs']['id']) && in_array((int) $block['attrs']['id'], $product_ids, true)) {
+            $block['attrs']['type'] = 'hpv_product';
+            $block['attrs']['url'] = get_permalink($block['attrs']['id']);
+        }
+        if (!empty($block['innerBlocks'])) { hpv_correct_customer_links($block['innerBlocks'], $pages); }
+    }
+    unset($block);
+}

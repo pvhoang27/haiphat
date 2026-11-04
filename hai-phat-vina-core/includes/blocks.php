@@ -66,8 +66,11 @@ function hpv_render_company_info($attributes) {
     <?php elseif ($layout === 'footer') : ?>
         <p><strong><?php echo esc_html(hpv_get('legal_name')); ?></strong></p>
         <p><?php echo esc_html(hpv_block_label($attributes, 'taxLabel', 'Mã số thuế')); ?>: <?php echo esc_html(hpv_get('tax_id')); ?></p>
-        <p><a href="<?php echo esc_url(hpv_phone_url()); ?>"><?php echo esc_html(hpv_get('phone')); ?></a><br><a href="<?php echo esc_url('mailto:' . hpv_get('email')); ?>"><?php echo esc_html(hpv_get('email')); ?></a></p>
-        <p><a href="<?php echo esc_url(hpv_zalo_url()); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html(hpv_block_label($attributes, 'zaloLabel', 'Trao đổi qua Zalo')); ?></a></p>
+        <div class="hpv-footer-contact-list">
+        <a href="<?php echo esc_url(hpv_phone_url()); ?>"><?php echo function_exists('hpv_icon') ? hpv_icon('phone') : '';  ?><span><strong><?php echo esc_html(hpv_block_label($attributes, 'hotlineLabel', 'Hotline')); ?>:</strong> <?php echo esc_html(hpv_get('phone')); ?></span></a>
+        <a href="<?php echo esc_url('mailto:' . hpv_get('email')); ?>"><?php echo function_exists('hpv_icon') ? hpv_icon('mail') : '';  ?><span><strong><?php echo esc_html(hpv_block_label($attributes, 'emailLabel', 'Email')); ?>:</strong> <?php echo esc_html(hpv_get('email')); ?></span></a>
+        <a href="<?php echo esc_url(hpv_zalo_url()); ?>" target="_blank" rel="noopener noreferrer"><?php echo hpv_zalo_mark(); ?><span><?php echo esc_html(hpv_block_label($attributes, 'zaloLabel', 'Trao đổi qua Zalo')); ?></span></a>
+        </div>
     <?php else : ?>
         <dl>
             <div><dt><?php echo esc_html(hpv_block_label($attributes, 'companyLabel', 'Doanh nghiệp')); ?></dt><dd><?php echo esc_html(hpv_get('legal_name')); ?></dd></div>

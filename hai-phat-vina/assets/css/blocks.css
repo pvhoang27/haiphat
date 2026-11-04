@@ -414,3 +414,27 @@ body.page .hpv-full-width-page:has(.hpv-contact-page) .hpv-full-width-title h1 {
   .wp-site-blocks .hpv-contact-dock a { width: auto; min-width: 0; height: auto; min-height: 44px; border-radius: 5px; gap: 9px; padding: 10px; justify-content: center; }
   .wp-site-blocks .hpv-contact-dock a > span { position: static; padding: 0; opacity: 1; pointer-events: auto; }
 }
+
+/* Keep the uploaded logo readable, including existing saved headers. */
+.wp-site-blocks .hpv-brand-copy { display: none; }
+.wp-site-blocks .hpv-brand .wp-block-site-logo img { width: 220px; max-width: 100%; max-height: 80px; }
+.hpv-footer-contact-list { display: grid; gap: 10px; margin-top: 14px; }
+.hpv-footer-contact-list > a { display: flex; align-items: center; gap: 10px; }
+.hpv-footer-contact-list :where(svg, .hpv-zalo-mark) { flex: 0 0 20px; width: 20px; height: 20px; }
+.hpv-footer-contact-list .hpv-zalo-mark img { width: 20px; height: 20px; }
+.hpv-footer-contact-list span { min-width: 0; }
+@media (max-width: 1050px) {
+  .wp-site-blocks .hpv-header-inner .wp-block-navigation__responsive-container.is-menu-open { overflow-y: auto; padding: 72px 24px 28px; }
+  .wp-site-blocks .hpv-header-inner .is-menu-open .wp-block-navigation__responsive-dialog { width: 100%; margin: 0; }
+  .wp-site-blocks .hpv-header-inner .is-menu-open .wp-block-navigation__responsive-container-content { padding-top: 0; align-items: stretch; gap: 0; }
+  .wp-site-blocks .hpv-header-inner .is-menu-open .wp-block-navigation__container { flex-direction: column; align-items: stretch; gap: 0; }
+  .wp-site-blocks .hpv-header-inner .is-menu-open .wp-block-navigation-item { align-items: stretch; width: 100%; text-align: left; }
+  .wp-site-blocks .hpv-header-inner .is-menu-open .wp-block-navigation-item__content { display: block; width: 100%; padding: 12px 0; text-align: left; line-height: 1.5; }
+  .wp-site-blocks .hpv-header-inner .is-menu-open .wp-block-navigation__container > .wp-block-navigation-item { border-bottom: 1px solid var(--hpv-line); }
+  .wp-site-blocks .hpv-header-inner .is-menu-open .wp-block-navigation__submenu-container { position: static; width: 100%; box-sizing: border-box; align-items: stretch; padding: 0 0 12px 16px; gap: 0; }
+  .wp-site-blocks .hpv-header-inner .is-menu-open .wp-block-navigation__submenu-container .wp-block-navigation-item__content { padding: 10px 0; font-size: 15px; font-weight: 400; }
+  .wp-site-blocks .hpv-header-inner .wp-block-navigation__responsive-container-close { display: grid; place-items: center; width: 44px; height: 44px; position: fixed; top: calc(12px + var(--wp-admin--admin-bar--height, 0px)); right: 24px; }
+}
+@media (max-width: 600px) {
+  .wp-site-blocks .hpv-brand .wp-block-site-logo img { width: 190px; max-height: 64px; }
+}
