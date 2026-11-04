@@ -32,6 +32,7 @@ require_once __DIR__ . '/includes/content.php';
 require_once __DIR__ . '/includes/contact.php';
 require_once __DIR__ . '/includes/admin.php';
 require_once __DIR__ . '/includes/blocks.php';
+require_once __DIR__ . '/includes/analytics.php';
 
 function hpv_core_activate() {
     hpv_setup_business_roles();

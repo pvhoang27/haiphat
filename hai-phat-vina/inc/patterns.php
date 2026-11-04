@@ -287,7 +287,7 @@ function hpv_site_patterns() {
     ), 'hpv-news-section', 'news');
 
     $patterns['contact-section'] = hpv_pattern_section('Tư vấn và nhận báo giá', array(hpv_pattern_columns(array(
-        array(hpv_pattern_paragraph('Tư vấn cùng Hải Phát Vina', 'hpv-kicker'), hpv_pattern_heading('Kể chúng tôi nghe<br>bạn đang cần gì.'), hpv_pattern_paragraph('Một vài thông tin về kích thước và vị trí sử dụng sẽ giúp cuộc trao đổi đi đúng hướng. Chúng tôi tiếp nhận nhu cầu để tư vấn quy cách và báo giá phù hợp.'), hpv_pattern_block('hpv/company-info', array('layout' => 'contact'))),
+        array(hpv_pattern_paragraph('Tư vấn cùng Hải Phát Vina', 'hpv-kicker'), hpv_pattern_paragraph('Kể chúng tôi nghe<br>bạn đang cần gì.'), hpv_pattern_paragraph('Một vài thông tin về kích thước và vị trí sử dụng sẽ giúp cuộc trao đổi đi đúng hướng. Chúng tôi tiếp nhận nhu cầu để tư vấn quy cách và báo giá phù hợp.'), hpv_pattern_block('hpv/company-info', array('layout' => 'contact'))),
         array(hpv_pattern_group(array(hpv_pattern_heading('Thông tin của bạn', 3), hpv_pattern_paragraph('Điền các mục có dấu * để chúng tôi có thể liên hệ.'), hpv_pattern_block('hpv/quote-form', array('variant' => 'compact'))), 'hpv-form-panel', 'Biểu mẫu nhận tư vấn')),
     ), 'hpv-contact-layout')), 'hpv-contact-section', 'contact');
 

@@ -87,6 +87,7 @@ function hpv_handle_quote() {
     $body = "Họ tên: {$name}\nĐiện thoại: {$phone}\nQuan tâm: {$need}\nKhu vực: {$location}\n\nNội dung:\n{$message}\n\nKhách đã đồng ý cho phép liên hệ tư vấn.\nThời gian: " . current_time('mysql');
     $post_id = wp_insert_post(wp_slash(array('post_type' => 'hpv_request', 'post_status' => 'private', 'post_title' => $name . ' — ' . $phone, 'post_content' => $body, 'meta_input' => array('_hpv_phone' => $phone, '_hpv_need' => $need, '_hpv_consent' => '1'))), true);
     if (is_wp_error($post_id) || !$post_id) { hpv_quote_response('error', 500); }
+    do_action('hpv_quote_saved', $post_id);
     set_transient($rate_key, 1, MINUTE_IN_SECONDS);
     set_transient($dedupe, $post_id, DAY_IN_SECONDS);
     $mail_sent = wp_mail(hpv_get('recipient'), '[Hải Phát Vina] Yêu cầu báo giá từ ' . $name, $body . "\n\nXem trong quản trị: " . admin_url('post.php?post=' . $post_id . '&action=edit'));

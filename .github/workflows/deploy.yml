@@ -28,6 +28,7 @@ jobs:
           node --check hai-phat-vina/assets/js/main.js
           node --check hai-phat-vina-core/assets/blocks.js
           node --check hai-phat-vina-core/assets/contact.js
+          node --check hai-phat-vina-core/assets/tracking.js
           bash -n dev/deploy/remote.sh
           bash -n dev/sync-design.sh
           python3 -m unittest discover -s dev/tests -p 'test_*.py'
@@ -58,6 +59,7 @@ jobs:
           docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-editable-blocks.php
           docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-design-export.php
           docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-customer-structure.php
+          docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-analytics.php
       - name: Verify legacy upgrade, repeat deployment and automatic rollback
         run: bash dev/verify-deployment.sh
       - name: Stop disposable test services

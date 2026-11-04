@@ -1,0 +1,49 @@
+name: Create report account
+on:
+  workflow_dispatch:
+    inputs:
+      username:
+        description: New read-only report username (existing accounts are preserved)
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: hai-phat-vina-production
+  cancel-in-progress: false
+jobs:
+  create:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create read-only account on production
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          THEME_PATH: ${{ secrets.THEME_PATH }}
+          DEPLOY_PRIVATE_KEY: ${{ secrets.DEPLOY_PRIVATE_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          REPORT_USERNAME: ${{ inputs.username }}
+          REPORT_PASSWORD: ${{ secrets.HPV_REPORT_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$REPORT_PASSWORD"
+          [[ "$THEME_PATH" =~ ^/[a-zA-Z0-9_./-]+/wp-content/themes/hai-phat-vina/?$ ]]
+          [[ "$THEME_PATH" != *..* ]]
+          [[ "$DEPLOY_PORT" =~ ^[0-9]+$ ]]
+          wp_root="${THEME_PATH%/}"
+          wp_root="${wp_root%/wp-content/themes/hai-phat-vina}"
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_PRIVATE_KEY" > ~/.ssh/hpv_report_deploy
+          chmod 600 ~/.ssh/hpv_report_deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          trap 'rm -f ~/.ssh/hpv_report_deploy' EXIT
+          remote_script="$wp_root/wp-content/.hpv-releases/$GITHUB_SHA/create-report-user.php"
+          scp -i ~/.ssh/hpv_report_deploy -P "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes dev/deploy/create-report-user.php "$DEPLOY_USER@$DEPLOY_HOST:$remote_script"
+          python3 -c 'import os,json; print(json.dumps({"username":os.environ["REPORT_USERNAME"],"password":os.environ["REPORT_PASSWORD"]}))' | ssh -i ~/.ssh/hpv_report_deploy -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" "php '$remote_script' '$wp_root'"

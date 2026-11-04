@@ -29,3 +29,12 @@ Gỡ kích hoạt không xóa bài, option, meta, khách hàng hay vai trò. Plu
 ## Email
 
 Form lưu yêu cầu trước, sau đó dùng `wp_mail()` để gửi email tới địa chỉ đã cấu hình. Cần cấu hình SMTP theo hosting và gửi thử; trạng thái “máy chủ đã tiếp nhận lệnh gửi” không khẳng định thư đã tới hộp thư.
+# Báo cáo lượt liên hệ
+
+Trang `/bao-cao/` có giao diện đăng nhập và báo cáo riêng, sử dụng tài khoản WordPress và cookie đăng nhập hiện có. Quản trị viên xem được báo cáo; để bàn giao, tạo tài khoản riêng trong Người dùng và chọn vai trò **Xem báo cáo**. Vai trò này không có quyền sửa nội dung hoặc cấu hình website. Không chia sẻ tài khoản quản trị. Khôi phục mật khẩu dùng email WordPress hiện có.
+
+Core tạo bảng `{prefix}hpv_events` trong cùng database trên hosting, không cần dịch vụ database riêng hoặc plugin mới. Ghi nhận bấm Zalo, `tel:`, liên kết HTTPS ra ngoài và link có `data-hpv-track="link"`; form chỉ ghi nhận sau khi yêu cầu riêng tư được lưu thành công. Không lưu IP thô, thông tin form, query string, nội dung link hoặc mã nhận diện khách trong bảng tracking. Không gửi các sự kiện này sang GA4 trong phiên bản này.
+
+Báo cáo lọc 7/30/90 ngày theo múi giờ website; dữ liệu sự kiện tự xóa sau 180 ngày qua WP-Cron. Backup database bao gồm bảng tracking; dữ liệu không bị xóa khi tắt plugin. Không có số liệu lịch sử trước khi triển khai. Lượt bấm là số tương tác, không phải số khách duy nhất hay cuộc gọi/tin nhắn thành công. Bỏ qua lượt bấm khi đăng nhập, lọc bot phổ biến và giới hạn 60 sự kiện/phút/IP bằng khóa băm tạm thời; endpoint công khai vẫn có thể bị giả lập, nên không dùng số liệu này để đối soát thanh toán.
+
+Khi triển khai, dùng HTTPS, loại `/bao-cao/` khỏi page cache/CDN và không cache POST `admin-ajax.php`. Kiểm tra email khôi phục mật khẩu. Thông báo quyền riêng tư của website cần mô tả việc thống kê tương tác. Kiểm tra local: `php /opt/hpv-checks/verify-analytics.php` trong container WordPress.
