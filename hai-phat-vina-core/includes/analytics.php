@@ -98,6 +98,11 @@ add_action('template_redirect', function () {
     header('X-Frame-Options: SAMEORIGIN', true);
     $error = '';
     if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+        if (isset($_POST['hpv_report_logout']) && is_string($_POST['hpv_report_logout']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['hpv_report_logout'])), 'hpv_report_logout')) {
+            wp_logout();
+            wp_safe_redirect(hpv_report_url());
+            exit;
+        }
         if (!isset($_POST['hpv_report_nonce']) || !is_string($_POST['hpv_report_nonce']) || !is_string($_POST['username'] ?? null) || !is_string($_POST['password'] ?? null) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['hpv_report_nonce'])), 'hpv_report_login')) {
             $error = 'Phiên đăng nhập hết hạn. Vui lòng tải lại trang.';
         } else {

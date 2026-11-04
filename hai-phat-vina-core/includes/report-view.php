@@ -20,7 +20,7 @@ if (is_user_logged_in() && hpv_analytics_allowed()) {
 }
 ?><!doctype html>
 <html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Báo cáo liên hệ | Hải Phát Vina</title><link rel="stylesheet" href="<?php echo esc_url(HPV_CORE_URL . 'assets/report.css?v=1'); ?>"></head>
-<body><header class="report-header"><a href="<?php echo esc_url(home_url('/')); ?>">Hải Phát Vina</a><span>Báo cáo website</span><?php if (is_user_logged_in()) : ?><a href="<?php echo esc_url(wp_logout_url(hpv_report_url())); ?>">Đăng xuất</a><?php endif; ?></header>
+<body><header class="report-header"><a href="<?php echo esc_url(home_url('/')); ?>">Hải Phát Vina</a><span>Báo cáo website</span><?php if (is_user_logged_in()) : ?><form method="post" action="<?php echo esc_url(hpv_report_url()); ?>" style="margin-left:auto"><?php wp_nonce_field('hpv_report_logout', 'hpv_report_logout'); ?><button type="submit">Đăng xuất</button></form><?php endif; ?></header>
 <main>
 <?php if (!is_user_logged_in()) : ?>
 <section class="login-panel"><h1>Theo dõi lượt liên hệ</h1><p>Đăng nhập để xem báo cáo website Hải Phát Vina.</p>
