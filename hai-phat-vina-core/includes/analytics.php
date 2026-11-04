@@ -114,7 +114,15 @@ add_action('template_redirect', function () {
                 set_transient($rate, $attempts + 1, 15 * MINUTE_IN_SECONDS);
                 $user = wp_signon(array('user_login' => sanitize_text_field(wp_unslash($_POST['username'] ?? '')), 'user_password' => (string) wp_unslash($_POST['password'] ?? ''), 'remember' => false), is_ssl());
                 if (is_wp_error($user)) { $error = 'Tên đăng nhập hoặc mật khẩu chưa đúng.'; }
-                else { delete_transient($rate); wp_safe_redirect(hpv_report_url()); exit; }
+                else {
+                    delete_transient($rate);
+                    $report_query = array();
+                    foreach (array('view', 'days', 'demo') as $field) {
+                        if (isset($_GET[$field]) && is_string($_GET[$field])) { $report_query[$field] = sanitize_text_field(wp_unslash($_GET[$field])); }
+                    }
+                    wp_safe_redirect(add_query_arg($report_query, hpv_report_url()));
+                    exit;
+                }
             }
         }
     }

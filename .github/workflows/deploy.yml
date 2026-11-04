@@ -29,6 +29,7 @@ jobs:
           node --check hai-phat-vina-core/assets/blocks.js
           node --check hai-phat-vina-core/assets/contact.js
           node --check hai-phat-vina-core/assets/tracking.js
+          node --check hai-phat-vina-core/assets/report.js
           bash -n dev/deploy/remote.sh
           bash -n dev/sync-design.sh
           python3 -m unittest discover -s dev/tests -p 'test_*.py'

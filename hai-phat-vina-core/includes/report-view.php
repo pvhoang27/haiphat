@@ -1,48 +1,99 @@
 <?php
 defined('ABSPATH') || exit;
-$labels = array('zalo' => 'Bấm Zalo', 'phone' => 'Bấm gọi điện', 'form' => 'Form thành công', 'link' => 'Bấm liên kết');
-$days = isset($_GET['days']) && in_array((int) $_GET['days'], array(7, 30, 90), true) ? (int) $_GET['days'] : 30;
+require_once __DIR__ . '/report-ui.php';
+$labels = array('zalo' => 'Zalo', 'phone' => 'Điện thoại', 'form' => 'Biểu mẫu', 'link' => 'Liên kết');
+$views = array('overview' => 'Tổng quan', 'contact' => 'Kênh liên hệ', 'forms' => 'Biểu mẫu', 'links' => 'Tracking liên kết');
+$view = isset($_GET['view']) && is_string($_GET['view']) && isset($views[$_GET['view']]) ? $_GET['view'] : 'overview';
+$days = isset($_GET['days']) && is_scalar($_GET['days']) && in_array((int) $_GET['days'], array(7, 30, 90), true) ? (int) $_GET['days'] : 30;
 $today = current_datetime();
-$start = $today->modify('-' . ($days - 1) . ' days')->format('Y-m-d');
+$start_date = $today->modify('-' . ($days - 1) . ' days');
+$start = $start_date->format('Y-m-d');
 $end = $today->modify('+1 day')->format('Y-m-d');
-$totals = array_fill_keys(array_keys($labels), 0);
-$daily = array();
-$pages = array();
+$previous_start = $start_date->modify('-' . $days . ' days')->format('Y-m-d');
+$demo = defined('WP_DEBUG') && WP_DEBUG && in_array(wp_parse_url(home_url(), PHP_URL_HOST), array('localhost', '127.0.0.1'), true) && isset($_GET['demo']) && $_GET['demo'] === '1';
+$totals = $previous = array_fill_keys(array_keys($labels), 0);
+$series = $pages = array();
 if (is_user_logged_in() && hpv_analytics_allowed()) {
     global $wpdb;
     $table = $wpdb->prefix . 'hpv_events';
-    $rows = $wpdb->get_results($wpdb->prepare("SELECT DATE(created_at) AS day, event_type, COUNT(*) AS count FROM $table WHERE created_at >= %s AND created_at < %s GROUP BY day,event_type ORDER BY day", $start, $end));
+    $rows = $wpdb->get_results($wpdb->prepare("SELECT DATE(created_at) AS day, event_type, COUNT(*) AS count FROM $table WHERE created_at >= %s AND created_at < %s GROUP BY day,event_type ORDER BY day", $previous_start, $end));
     foreach ($rows as $row) {
-        if (isset($totals[$row->event_type])) { $totals[$row->event_type] += (int) $row->count; }
-        $daily[$row->day] = ($daily[$row->day] ?? 0) + (int) $row->count;
+        if (!isset($totals[$row->event_type])) { continue; }
+        if ($row->day < $start) { $previous[$row->event_type] += (int) $row->count; continue; }
+        $totals[$row->event_type] += (int) $row->count;
+        $series[$row->day][$row->event_type] = (int) $row->count;
     }
-    $pages = $wpdb->get_results($wpdb->prepare("SELECT page_path, SUM(event_type='zalo') AS zalo, SUM(event_type='phone') AS phone, SUM(event_type='form') AS form, SUM(event_type='link') AS link, COUNT(*) AS total FROM $table WHERE created_at >= %s AND created_at < %s GROUP BY page_path ORDER BY total DESC LIMIT 20", $start, $end));
+    $pages = $wpdb->get_results($wpdb->prepare("SELECT page_path, SUM(event_type='zalo') AS zalo, SUM(event_type='phone') AS phone, SUM(event_type='form') AS form, SUM(event_type='link') AS link FROM $table WHERE created_at >= %s AND created_at < %s GROUP BY page_path", $start, $end), ARRAY_A);
+    if ($demo) {
+        $totals = array_fill_keys(array_keys($labels), 0); $series = array();
+        for ($i = 0; $i < $days; $i++) {
+            $date = $start_date->modify('+' . $i . ' days')->format('Y-m-d');
+            $values = array('zalo' => 8 + ($i * 7 % 17) + (int) ($i / 4), 'phone' => 5 + ($i * 3 % 11), 'form' => 2 + ($i * 5 % 7), 'link' => 6 + ($i * 11 % 19));
+            $series[$date] = $values;
+            foreach ($values as $type => $count) { $totals[$type] += $count; }
+        }
+        foreach ($totals as $type => $count) { $previous[$type] = (int) round($count * .81); }
+        $pages = array();
+        $remaining = $totals;
+        foreach (array('/' => .31, '/san-pham/mai-xep-luon-song/' => .24, '/san-pham/bat-hdpe/' => .18, '/lien-he/' => .16, '/bao-gia/' => .11) as $path => $weight) {
+            $page = array('page_path' => $path);
+            foreach ($totals as $type => $count) {
+                $page[$type] = $path === '/bao-gia/' ? $remaining[$type] : (int) floor($count * $weight);
+                $remaining[$type] -= $page[$type];
+            }
+            $pages[] = $page;
+        }
+    }
 }
+$types = $view === 'links' ? array('link') : ($view === 'forms' ? array('form') : ($view === 'contact' ? array('zalo', 'phone') : array('zalo', 'phone', 'form')));
+$total = $prior = 0;
+foreach ($types as $type) { $total += $totals[$type]; $prior += $previous[$type]; }
+$daily = array();
+for ($i = 0; $i < $days; $i++) {
+    $date = $start_date->modify('+' . $i . ' days')->format('Y-m-d');
+    $daily[$date] = array_intersect_key(array_merge(array_fill_keys(array_keys($labels), 0), $series[$date] ?? array()), array_flip($types));
+}
+foreach ($pages as &$page) { $page['total'] = array_sum(array_intersect_key($page, array_flip($types))); }
+unset($page);
+$pages = array_values(array_filter($pages, function ($page) { return $page['total'] > 0; }));
+usort($pages, function ($a, $b) { return $b['total'] <=> $a['total']; });
+$peak = 0; $peak_date = '';
+foreach ($daily as $date => $values) { if (array_sum($values) > $peak) { $peak = array_sum($values); $peak_date = $date; } }
+$params = array('days' => $days);
+if ($demo) { $params['demo'] = '1'; }
+$name = is_user_logged_in() ? wp_get_current_user()->display_name : '';
+$descriptions = array('overview' => 'Theo dõi Zalo, điện thoại và biểu mẫu trong một không gian.', 'contact' => 'Phân tích lượt bấm Zalo và điện thoại theo thời gian.', 'forms' => 'Tổng hợp các biểu mẫu đã được website tiếp nhận thành công.', 'links' => 'Không gian riêng cho lượt bấm liên kết từ các trang trên website.');
 ?><!doctype html>
-<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Báo cáo liên hệ | Hải Phát Vina</title><link rel="stylesheet" href="<?php echo esc_url(HPV_CORE_URL . 'assets/report.css?v=1'); ?>"></head>
-<body><header class="report-header"><a href="<?php echo esc_url(home_url('/')); ?>">Hải Phát Vina</a><span>Báo cáo website</span><?php if (is_user_logged_in()) : ?><form method="post" action="<?php echo esc_url(hpv_report_url()); ?>" style="margin-left:auto"><?php wp_nonce_field('hpv_report_logout', 'hpv_report_logout'); ?><button type="submit">Đăng xuất</button></form><?php endif; ?></header>
-<main>
-<?php if (!is_user_logged_in()) : ?>
-<section class="login-panel"><h1>Theo dõi lượt liên hệ</h1><p>Đăng nhập để xem báo cáo website Hải Phát Vina.</p>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title><?php echo esc_html($views[$view]); ?> | Hải Phát Analytics</title><link rel="stylesheet" href="<?php echo esc_url(HPV_CORE_URL . 'assets/report.css?v=2'); ?>"></head>
+<body class="<?php echo is_user_logged_in() && hpv_analytics_allowed() ? 'report-app' : 'report-auth'; ?>">
+<?php if (!is_user_logged_in() || !hpv_analytics_allowed()) : ?>
+<main class="auth-layout"><div class="auth-story"><a class="brand" href="<?php echo esc_url(home_url('/')); ?>"><span class="brand-mark">H</span><span>Hải Phát Vina<small>Analytics workspace</small></span></a><div><span class="story-tag">Một góc nhìn rõ ràng hơn</span><h1>Hiểu tương tác.<br>Nắm bắt cơ hội.</h1><p>Mỗi kết nối đều có một điểm bắt đầu.<br>Theo dõi hiệu quả website của bạn tại đây.</p><div class="story-graphic" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><small>Hải Phát Vina · Không gian báo cáo riêng</small></div>
+<div class="auth-form-wrap"><section class="login-panel">
+<?php if (!is_user_logged_in()) : ?><span class="login-symbol"><?php hpv_report_icon('lock'); ?></span><h2>Chào mừng trở lại</h2><p>Đăng nhập để xem báo cáo website của bạn.</p>
 <?php if ($error) : ?><p class="error" role="alert"><?php echo esc_html($error); ?></p><?php endif; ?>
-<form method="post" action="<?php echo esc_url(hpv_report_url()); ?>"><?php wp_nonce_field('hpv_report_login', 'hpv_report_nonce'); ?>
-<label for="username">Tên đăng nhập hoặc email</label><input id="username" name="username" autocomplete="username" required maxlength="254">
-<label for="password">Mật khẩu</label><input id="password" name="password" type="password" autocomplete="current-password" required>
-<button type="submit">Đăng nhập</button></form><a class="recovery" href="<?php echo esc_url(wp_lostpassword_url(hpv_report_url())); ?>">Quên mật khẩu?</a></section>
-<?php elseif (!hpv_analytics_allowed()) : ?>
-<section class="login-panel"><h1>Chưa có quyền xem báo cáo</h1><p>Liên hệ người quản lý website để được cấp quyền Xem báo cáo.</p></section>
+<form method="post" action="<?php echo esc_url(add_query_arg(array_merge($params, array('view' => $view)), hpv_report_url())); ?>"><?php wp_nonce_field('hpv_report_login', 'hpv_report_nonce'); ?><label for="username">Tên đăng nhập hoặc email</label><input id="username" name="username" autocomplete="username" required maxlength="254" placeholder="Nhập tên đăng nhập"><label for="password">Mật khẩu</label><input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Nhập mật khẩu"><button class="primary-button" type="submit">Đăng nhập <?php hpv_report_icon('arrow'); ?></button></form>
+<?php else : ?><h2>Chưa có quyền xem báo cáo</h2><p>Liên hệ người quản lý website để được cấp quyền Xem báo cáo.</p><?php hpv_report_logout(); ?><?php endif; ?>
+</section><small class="auth-footer">Báo cáo website Hải Phát Vina</small></div></main>
 <?php else : ?>
-<div class="report-title"><div><h1>Lượt liên hệ từ website</h1><p><?php echo esc_html(wp_date('d/m/Y', strtotime($start)) . ' – ' . $today->format('d/m/Y')); ?> · Giờ <?php echo esc_html(wp_timezone_string()); ?></p></div>
-<form method="get"><label for="days">Khoảng thời gian</label><div class="filter"><select id="days" name="days"><?php foreach (array(7, 30, 90) as $option) : ?><option value="<?php echo (int) $option; ?>" <?php selected($days, $option); ?>><?php echo (int) $option; ?> ngày gần đây</option><?php endforeach; ?></select><button type="submit">Xem</button></div></form></div>
-<section class="metrics" aria-label="Tổng lượt tương tác"><?php foreach ($labels as $type => $label) : ?><div><h2><?php echo esc_html($label); ?></h2><strong><?php echo esc_html(number_format_i18n($totals[$type])); ?></strong></div><?php endforeach; ?></section>
-<section class="report-section"><h2>Tương tác theo ngày</h2>
-<?php if (!array_sum($totals)) : ?><p class="empty">Chưa có tương tác trong khoảng thời gian này. Số liệu sẽ xuất hiện khi khách bấm liên hệ hoặc gửi form thành công.</p><?php else : ?>
-<div class="chart" role="img" aria-label="Biểu đồ tổng tương tác theo ngày. Số liệu chi tiết trong bảng bên dưới."><?php $max = max(1, ...array_values($daily)); for ($i = 0; $i < $days; $i++) : $date = $today->modify('-' . ($days - 1 - $i) . ' days')->format('Y-m-d'); $count = $daily[$date] ?? 0; ?><div class="bar-column" title="<?php echo esc_attr($date . ': ' . $count); ?>"><div class="bar" style="height:<?php echo esc_attr((string) round($count / $max * 100, 2)); ?>%"></div></div><?php endfor; ?></div><div class="chart-labels"><span><?php echo esc_html($start); ?></span><span><?php echo esc_html($today->format('Y-m-d')); ?></span></div>
-<details><summary>Xem số liệu từng ngày</summary><table><thead><tr><th>Ngày</th><th>Tương tác</th></tr></thead><tbody><?php foreach ($daily as $date => $count) : ?><tr><td><?php echo esc_html($date); ?></td><td><?php echo (int) $count; ?></td></tr><?php endforeach; ?></tbody></table></details>
+<aside class="sidebar"><a class="brand" href="<?php echo esc_url(hpv_report_url()); ?>"><span class="brand-mark">H</span><span>Hải Phát Vina<small>Analytics workspace</small></span></a><div class="workspace-label">Không gian làm việc</div><nav aria-label="Báo cáo"><?php foreach ($views as $key => $label) : ?><a class="nav-item <?php echo $view === $key ? 'is-active' : ''; ?>" href="<?php echo esc_url(add_query_arg(array_merge($params, array('view' => $key)), hpv_report_url())); ?>" <?php if ($view === $key) { echo 'aria-current="page"'; } ?>><?php hpv_report_icon($key); ?><span><?php echo esc_html($label); ?></span><?php if ($view === $key) : ?><span class="nav-dot"></span><?php endif; ?></a><?php endforeach; ?></nav><div class="sidebar-bottom"><a class="site-link" href="<?php echo esc_url(home_url('/')); ?>" target="_blank" rel="noopener"><?php hpv_report_icon('external'); ?> Xem website</a><div class="profile"><span class="avatar"><?php echo esc_html(strtoupper(substr($name, 0, 1))); ?></span><div><strong><?php echo esc_html($name); ?></strong><small>Tài khoản báo cáo</small></div><?php hpv_report_logout(); ?></div></div></aside>
+<div class="workspace"><header class="topbar"><div class="breadcrumb">Báo cáo <span>/</span> <strong><?php echo esc_html($views[$view]); ?></strong></div><div class="site-status"><i></i> haiphatvina.com</div></header>
+<main class="report-main">
+<?php if ($demo) : ?><div class="demo-banner"><?php hpv_report_icon('info'); ?><span>Đang xem dữ liệu minh họa trên local</span><a href="<?php echo esc_url(remove_query_arg('demo')); ?>">Xem dữ liệu thật</a></div><?php endif; ?>
+<div class="page-heading"><div><h1><?php echo esc_html($views[$view]); ?><span class="heading-dot">.</span></h1><p><?php echo esc_html($descriptions[$view]); ?></p></div><form class="date-filter" method="get"><input type="hidden" name="view" value="<?php echo esc_attr($view); ?>"><?php if ($demo) : ?><input type="hidden" name="demo" value="1"><?php endif; ?><label class="sr-only" for="days">Khoảng thời gian</label><?php hpv_report_icon('calendar'); ?><select id="days" name="days" onchange="this.form.submit()"><?php foreach (array(7, 30, 90) as $option) : ?><option value="<?php echo (int) $option; ?>" <?php selected($days, $option); ?>><?php echo (int) $option; ?> ngày gần đây</option><?php endforeach; ?></select><noscript><button type="submit">Xem</button></noscript></form></div>
+<div class="period-line"><span><?php echo esc_html($start_date->format('d/m/Y') . ' – ' . $today->format('d/m/Y')); ?></span><span>Cập nhật <?php echo esc_html($today->format('H:i')); ?></span></div>
+<section class="metric-grid" aria-label="Chỉ số chính">
+<article class="metric metric-lead"><div class="metric-top"><span><?php echo $view === 'links' ? 'Tổng lượt bấm liên kết' : ($view === 'forms' ? 'Biểu mẫu thành công' : 'Tổng lượt liên hệ'); ?></span><span class="metric-icon"><?php hpv_report_icon('activity'); ?></span></div><strong class="metric-value"><?php echo esc_html(number_format_i18n($total)); ?></strong><div class="metric-bottom"><?php hpv_report_change($total, $prior); ?><span>so với <?php echo (int) $days; ?> ngày trước</span></div><?php hpv_report_sparkline(array_map('array_sum', $daily), 'lead'); ?></article>
+<?php if (count($types) > 1) : foreach ($types as $type) : ?><article class="metric metric-<?php echo esc_attr($type); ?>"><div class="metric-top"><span><?php echo esc_html($type === 'form' ? 'Form thành công' : 'Lượt bấm ' . $labels[$type]); ?></span><span class="metric-icon"><?php hpv_report_icon($type); ?></span></div><strong class="metric-value"><?php echo esc_html(number_format_i18n($totals[$type])); ?></strong><div class="metric-bottom"><?php hpv_report_change($totals[$type], $previous[$type]); ?><span>so với kỳ trước</span></div><?php hpv_report_sparkline(array_map(function ($values) use ($type) { return $values[$type] ?? 0; }, $daily), $type); ?></article><?php endforeach; else : ?>
+<article class="metric"><div class="metric-top"><span>Trang có tương tác</span><span class="metric-icon"><?php hpv_report_icon('pages'); ?></span></div><strong class="metric-value"><?php echo count($pages); ?></strong><div class="metric-bottom"><span>trang trong thời gian đã chọn</span></div></article><article class="metric"><div class="metric-top"><span>Trung bình mỗi ngày</span><span class="metric-icon"><?php hpv_report_icon('activity'); ?></span></div><strong class="metric-value"><?php echo esc_html(number_format_i18n($total / $days, 1)); ?></strong><div class="metric-bottom"><span>lượt / ngày</span></div></article><article class="metric"><div class="metric-top"><span>Ngày hiệu quả nhất</span><span class="metric-icon"><?php hpv_report_icon('calendar'); ?></span></div><strong class="metric-value"><?php echo esc_html($peak_date ? (new DateTimeImmutable($peak_date))->format('d/m') : '—'); ?></strong><div class="metric-bottom"><span><?php echo (int) $peak; ?> lượt tương tác</span></div></article>
 <?php endif; ?></section>
-<section class="report-section"><h2>Trang mang lại tương tác</h2><div class="table-wrap"><table><thead><tr><th scope="col">Trang</th><?php foreach ($labels as $label) : ?><th scope="col"><?php echo esc_html($label); ?></th><?php endforeach; ?></tr></thead><tbody>
-<?php foreach ($pages as $page) : ?><tr><th scope="row"><?php echo esc_html($page->page_path); ?></th><?php foreach ($labels as $type => $label) : ?><td><?php echo esc_html(number_format_i18n((int) $page->$type)); ?></td><?php endforeach; ?></tr><?php endforeach; ?>
-<?php if (!$pages) : ?><tr><td colspan="5">Chưa có dữ liệu.</td></tr><?php endif; ?></tbody></table></div></section>
-<aside class="report-notes"><p>Mỗi lần bấm được tính là một lượt, không phải số khách hàng. Bấm Zalo hoặc gọi điện chưa xác nhận cuộc trò chuyện đã diễn ra. Form chỉ được tính khi website lưu yêu cầu thành công.</p><p>Liên kết gồm link ra ngoài website và link được chọn theo dõi. Lượt bấm khi đăng nhập không được tính. Trình chặn hoặc kết nối mạng có thể làm thiếu lượt bấm.</p><p>Bắt đầu ghi nhận: <?php echo esc_html(get_option('hpv_analytics_started', '')); ?>. Không có số liệu trước thời điểm này.</p></aside>
+<div class="charts-layout <?php echo count($types) === 1 ? 'wide-chart' : ''; ?>"><section class="panel trend-panel"><div class="panel-heading"><div><h2><?php echo $view === 'links' ? 'Xu hướng bấm liên kết' : ($view === 'forms' ? 'Xu hướng gửi biểu mẫu' : 'Xu hướng liên hệ'); ?></h2><p>Phân tích theo từng ngày</p></div><span class="panel-badge">Theo ngày</span></div><div class="chart-legend"><?php foreach ($types as $type) : ?><span><i class="dot dot-<?php echo esc_attr($type); ?>"></i><?php echo esc_html($labels[$type]); ?></span><?php endforeach; ?></div><?php hpv_report_chart($daily, $types, $labels); ?>
+<details class="daily-details"><summary>Xem bảng số liệu theo ngày <?php hpv_report_icon('chevron'); ?></summary><div class="table-wrap"><table><thead><tr><th>Ngày</th><?php foreach ($types as $type) : ?><th><?php echo esc_html($labels[$type]); ?></th><?php endforeach; ?></tr></thead><tbody><?php foreach ($daily as $date => $values) : ?><tr><td><?php echo esc_html((new DateTimeImmutable($date))->format('d/m/Y')); ?></td><?php foreach ($types as $type) : ?><td><?php echo (int) $values[$type]; ?></td><?php endforeach; ?></tr><?php endforeach; ?></tbody></table></div></details></section>
+<?php if (count($types) > 1) : ?><section class="panel distribution-panel"><div class="panel-heading"><div><h2>Phân bổ kênh</h2><p>Tỷ trọng lượt liên hệ</p></div><?php hpv_report_icon('distribution'); ?></div><?php hpv_report_donut($totals, $types, $total); ?><div class="distribution-legend"><?php foreach ($types as $type) : ?><div><span><i class="dot dot-<?php echo esc_attr($type); ?>"></i><?php echo esc_html($labels[$type]); ?></span><strong><?php echo esc_html(number_format_i18n($totals[$type])); ?></strong><small><?php echo $total ? esc_html(number_format_i18n($totals[$type] / $total * 100, 1)) : '0'; ?>%</small></div><?php endforeach; ?></div></section><?php endif; ?></div>
+<section class="panel pages-panel"><div class="panel-heading"><div><h2><?php echo $view === 'links' ? 'Trang phát sinh lượt bấm liên kết' : ($view === 'forms' ? 'Trang mang lại biểu mẫu' : 'Hiệu quả theo trang'); ?></h2><p><?php echo $view === 'links' ? 'Lượt bấm liên kết được thống kê riêng theo trang nguồn.' : 'Những trang mang lại nhiều tương tác nhất.'; ?></p></div><span class="panel-badge"><?php echo count($pages); ?> trang</span></div><div class="table-wrap"><table class="pages-table"><thead><tr><th scope="col">Trang nguồn</th><?php foreach ($types as $type) : ?><th scope="col"><?php echo esc_html(count($types) === 1 ? ($type === 'link' ? 'Lượt bấm' : 'Form thành công') : $labels[$type]); ?></th><?php endforeach; ?><?php if (count($types) > 1) : ?><th scope="col">Tổng lượt</th><?php endif; ?><th scope="col">Tỷ trọng</th></tr></thead><tbody>
+<?php foreach (array_slice($pages, 0, 20) as $page) : ?><tr><th scope="row"><div class="page-cell"><span class="page-icon"><?php hpv_report_icon($page['page_path'] === '/' ? 'home' : 'pages'); ?></span><span><strong><?php echo esc_html(hpv_report_page_name($page['page_path'])); ?></strong><small><?php echo esc_html($page['page_path']); ?></small></span></div></th><?php foreach ($types as $type) : ?><td><?php echo esc_html(number_format_i18n((int) $page[$type])); ?></td><?php endforeach; ?><?php if (count($types) > 1) : ?><td class="total-cell"><?php echo esc_html(number_format_i18n($page['total'])); ?></td><?php endif; ?><td><div class="share-cell"><span><?php echo $total ? esc_html(number_format_i18n($page['total'] / $total * 100, 1)) : '0'; ?>%</span><i style="--share:<?php echo esc_attr((string) min(100, $total ? round($page['total'] / $total * 100) : 0)); ?>%"></i></div></td></tr><?php endforeach; ?>
+<?php if (!$pages) : ?><tr><td class="empty-state" colspan="<?php echo count($types) + (count($types) > 1 ? 3 : 2); ?>"><?php hpv_report_icon($view); ?><strong>Chưa có dữ liệu trong giai đoạn này</strong><span>Thử chọn khoảng thời gian khác để xem báo cáo.</span></td></tr><?php endif; ?></tbody></table></div></section>
+<footer class="report-footer"><span>Hải Phát Vina Analytics</span><span><?php echo esc_html($today->format('d/m/Y')); ?></span></footer>
+</main></div>
 <?php endif; ?>
-</main><footer>Hải Phát Vina · Báo cáo nội bộ</footer></body></html>
+<script src="<?php echo esc_url(HPV_CORE_URL . 'assets/report.js?v=1'); ?>" defer></script>
+</body></html>
