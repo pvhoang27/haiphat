@@ -8,7 +8,7 @@
     if (!link) return;
     let url;
     try { url = new URL(link.href, location.href); } catch (_) { return; }
-    const type = url.protocol === 'tel:' ? 'phone' : /(^|\.)zalo\.(me|vn)$/i.test(url.hostname) ? 'zalo' : link.dataset.hpvTrack === 'link' || (url.protocol === 'https:' && url.origin !== location.origin) ? 'link' : null;
+    const type = url.protocol === 'tel:' ? 'phone' : /(^|\.)zalo\.(me|vn)$/i.test(url.hostname) ? 'zalo' : null;
     if (!type || !crypto.randomUUID) return;
     const now = Date.now();
     if (previous.element === link && now - previous.time < 1500) return;
