@@ -231,3 +231,17 @@ function hpv_use_horizontal_logo() {
     update_option('hpv_horizontal_logo_v1', 1, false);
     return true;
 }
+
+/** Use outlined vectors only for our bundled identity; customer uploads stay editable. */
+function hpv_horizontal_logo_image_attributes($attr, $attachment) {
+    $logo_id = (int) get_option('hpv_horizontal_logo_id');
+    if (!$logo_id || (int) $attachment->ID !== $logo_id || empty($attr['class']) || !in_array('custom-logo', explode(' ', $attr['class']), true)) {
+        return $attr;
+    }
+    $attr['src'] = get_template_directory_uri() . '/assets/brand/hai-phat-vina-logo-ngang.svg';
+    // Saved Site Logo blocks can still declare 64px while CSS displays 320px.
+    // A raster srcset would make browsers select a blurry small thumbnail.
+    unset($attr['srcset'], $attr['sizes']);
+    return $attr;
+}
+add_filter('wp_get_attachment_image_attributes', 'hpv_horizontal_logo_image_attributes', 20, 2);
