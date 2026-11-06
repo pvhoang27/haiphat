@@ -67,7 +67,7 @@ function hpv_analytics_collect() {
     $type = sanitize_key(wp_unslash($_POST['event'] ?? ''));
     $key = sanitize_text_field(wp_unslash($_POST['key'] ?? ''));
     $path = wp_unslash($_POST['path'] ?? '/');
-    if (!in_array($type, array('zalo', 'phone', 'link'), true) || !preg_match('/^[a-f0-9-]{36}$/i', $key) || !is_string($path)) { wp_send_json_error(null, 400); }
+    if (!in_array($type, array('zalo', 'phone'), true) || !preg_match('/^[a-f0-9-]{36}$/i', $key) || !is_string($path)) { wp_send_json_error(null, 400); }
     // A salted, short-lived rate key; raw IP addresses are never stored.
     $rate = 'hpv_ev_' . hash_hmac('sha256', ($_SERVER['REMOTE_ADDR'] ?? '') . gmdate('YmdHi'), wp_salt('nonce'));
     $count = (int) get_transient($rate);
@@ -83,7 +83,7 @@ add_action('wp_ajax_hpv_track', 'hpv_analytics_collect');
 
 add_action('wp_enqueue_scripts', function () {
     if (is_user_logged_in()) { return; }
-    wp_enqueue_script('hpv-tracking', HPV_CORE_URL . 'assets/tracking.js', array(), '1.0.0', true);
+    wp_enqueue_script('hpv-tracking', HPV_CORE_URL . 'assets/tracking.js', array(), '1.0.1', true);
     wp_add_inline_script('hpv-tracking', 'window.hpvTracking=' . wp_json_encode(array('endpoint' => admin_url('admin-ajax.php'))) . ';', 'before');
 });
 
