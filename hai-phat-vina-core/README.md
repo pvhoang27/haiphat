@@ -42,3 +42,11 @@ Khi triển khai, dùng HTTPS, loại `/bao-cao/` khỏi page cache/CDN và khô
 Giao diện báo cáo chia hai mục: Tổng quan (Zalo, điện thoại, form) và Biểu mẫu. Mỗi mục có biểu đồ theo ngày và bảng trang nguồn; tổng quan có thêm biểu đồ phân bổ. So sánh tăng/giảm sử dụng khoảng thời gian liền trước cùng độ dài.
 
 Xem thiết kế với dữ liệu minh họa tại `/bao-cao/?demo=1`. Chế độ này chỉ hoạt động khi `WP_DEBUG` bật và hostname WordPress là `localhost` hoặc `127.0.0.1`; luôn cần quyền xem báo cáo. Dữ liệu minh họa được tạo trong bộ nhớ, có nhãn riêng, không ghi database hoặc thay đổi số liệu thật. Font Be Vietnam Pro được phục vụ từ plugin, kèm giấy phép OFL trong `assets/fonts/`.
+
+## Sitemap bài viết
+
+Khi Rank Math hoạt động, Core bật `pt_post_sitemap` một lần và làm mới cache sitemap. Bổ sung cấu hình mặc định cho Trang, Sản phẩm và Công trình nếu chưa có cấu hình; giữ lựa chọn bật/tắt đã lưu cho các nhóm này. Người quản trị vẫn có thể đổi cấu hình sau đó. Rank Math tự thêm `post-sitemap.xml` vào sitemap index khi có bài viết công khai đủ điều kiện. Không tạo bài mẫu hoặc đưa bản nháp vào sitemap.
+
+Cấu trúc chính: `page-sitemap.xml`, `post-sitemap.xml`, `product-sitemap.xml`; `project-sitemap.xml` xuất hiện khi có công trình đủ điều kiện. Hai tên công khai `product`/`project` ánh xạ tới loại nội dung gốc `hpv_product`/`hpv_project`, không đổi database hay URL nội dung. Các đường dẫn sitemap cũ có tiền tố `hpv_` chuyển hướng 301 sang tên mới, kể cả các trang sitemap đánh số. Giữ robots, canonical và cấu hình taxonomy hiện tại. Không tạo sitemap rỗng hoặc ép thêm nhóm danh mục/thẻ/tác giả. Sitemap ảnh lọc biểu tượng Zalo đi kèm theme/Core và các URL ảnh trùng trong từng trang; ảnh nội dung được giữ lại. Sitemap index, phân trang, `lastmod`, robots.txt và lọc trạng thái bài tiếp tục do Rank Math quản lý.
+
+Kiểm thử tích hợp tùy chọn: trên WordPress local có Rank Math đã hoàn tất/skip đăng ký, bật module Sitemap và lưu lại Permalinks, chạy `docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-sitemaps.php`. Script tạo rồi xóa các bài QA, kiểm tra XML qua HTTP và khôi phục thiết lập đã đổi. Không chạy trên production.
