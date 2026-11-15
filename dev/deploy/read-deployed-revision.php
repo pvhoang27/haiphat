@@ -3,6 +3,9 @@
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 $root = isset($argv[1]) ? rtrim($argv[1], '/') : '';
 if (!preg_match('~\A/[a-zA-Z0-9_./-]+\z~', $root) || strpos($root, '..') !== false || !is_file($root . '/wp-load.php')) { exit(1); }
+// An interrupted release can leave old DB revision metadata beside partially
+// switched code. Never treat that old healthy marker as an unchanged site.
+if (is_file($root . '/.maintenance')) { fwrite(STDERR, "Production is in maintenance; inspect the interrupted release before comparing code.\n"); exit(1); }
 define('DISABLE_WP_CRON', true);
 define('HPV_DESIGN_SYNC_SUPPRESS', true);
 $_SERVER['HTTP_HOST'] = 'localhost';
