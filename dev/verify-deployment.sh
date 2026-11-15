@@ -46,5 +46,13 @@ PY
 docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-deploy-tools/ack-design-sync.php "$hpv_root" "${hpv_context[0]}" "${hpv_context[1]}"
 hpv_healthy_revision="$(docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-deploy-tools/read-deployed-revision.php "$hpv_root")"
 [[ "$hpv_healthy_revision" == 0000000000000000000000000000000000000002 ]]
+docker compose -f dev/compose.yaml exec -T wordpress touch "$hpv_root/.maintenance"
+if docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-deploy-tools/read-deployed-revision.php "$hpv_root"; then
+  docker compose -f dev/compose.yaml exec -T wordpress rm "$hpv_root/.maintenance"
+  printf '%s\n' 'FAIL: interrupted maintenance was treated as a healthy unchanged release.' >&2
+  exit 1
+fi
+docker compose -f dev/compose.yaml exec -T wordpress rm "$hpv_root/.maintenance"
+printf '%s\n' 'PASS: interrupted maintenance cannot be mistaken for an unchanged healthy release.'
 printf '%s\n' 'PASS: SSH export, validated ACK and healthy production revision after rollback.'
 printf '%s\n' 'PASS: legacy upgrade, repeat deployment and failure rollback on real isolated WordPress.'
