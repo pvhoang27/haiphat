@@ -27,4 +27,24 @@ for hpv_attempt in 1 2 3; do
   docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/deploy-fixture.php check
   if [ "$hpv_attempt" = 1 ]; then docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/deploy-fixture.php edit; fi
 done
+hpv_export_file="$(mktemp)"
+trap 'rm -f "$hpv_export_file"' EXIT
+docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-deploy-tools/export-design.php "$hpv_root" > "$hpv_export_file"
+docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/deploy-fixture.php check-sync-context < "$hpv_export_file"
+mapfile -t hpv_context < <(python3 - "$hpv_export_file" <<'PY'
+import importlib.util, json, pathlib, sys
+spec = importlib.util.spec_from_file_location('sync', 'dev/sync-design.py')
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+raw = pathlib.Path(sys.argv[1]).read_bytes()
+module.validate(raw)
+context = json.loads(raw)['sync']
+print(context['hash'])
+print(context['generation'])
+PY
+)
+docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-deploy-tools/ack-design-sync.php "$hpv_root" "${hpv_context[0]}" "${hpv_context[1]}"
+hpv_healthy_revision="$(docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-deploy-tools/read-deployed-revision.php "$hpv_root")"
+[[ "$hpv_healthy_revision" == 0000000000000000000000000000000000000002 ]]
+printf '%s\n' 'PASS: SSH export, validated ACK and healthy production revision after rollback.'
 printf '%s\n' 'PASS: legacy upgrade, repeat deployment and failure rollback on real isolated WordPress.'

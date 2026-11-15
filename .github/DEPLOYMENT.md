@@ -1,18 +1,19 @@
 # Production CI/CD
 
-Push `main` kích hoạt `.github/workflows/deploy.yml`. Chỉ deploy sau khi kiểm thử WordPress thực, form, migration và phân quyền đạt. Workflow không tạo hoặc phân phối ZIP.
+Push `main` kích hoạt `.github/workflows/deploy.yml`. Sau khi kiểm thử WordPress thực, form, migration và phân quyền đạt, workflow đọc revision production đã healthy qua SSH và so với commit cần triển khai. Chỉ thay đổi `hai-phat-vina/`, `hai-phat-vina-core/`, `dev/deploy/`, workflow deploy hoặc bộ lọc `dev/changed-deploy.py` mới upload/deploy; snapshot/tài liệu không đổi code sẽ bỏ qua maintenance và triển khai. So với production thay vì commit trước push giúp không bỏ sót code nếu workflow trước thất bại hoặc bị thay thế trong hàng chờ. Không đọc được revision hợp lệ thì triển khai thận trọng. Run workflow trên `main` chủ động chạy deploy dù code không đổi. Workflow không tạo hoặc phân phối ZIP.
 
 ## Secrets hiện có của environment `production`
 
 - `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_PORT`.
 - `DEPLOY_PRIVATE_KEY`, `DEPLOY_KNOWN_HOSTS`.
 - `THEME_PATH`: đường dẫn tuyệt đối kết thúc `/wp-content/themes/hai-phat-vina`.
+- `DESIGN_SYNC_DISPATCH_TOKEN`: fine-grained PAT chỉ chọn repo `pvhoang27/haiphat`, quyền repository **Actions: Read and write**. Không cần Contents/Pull requests write cho token này. Đặt ngày hết hạn phù hợp và xoay token trước khi hết hạn.
 
-Không cần thêm secret cho plugin: workflow suy ra WordPress root và `wp-content/plugins/hai-phat-vina-core`. Không commit khóa, mật khẩu hoặc wp-config/database dump.
+Workflow suy ra WordPress root và `wp-content/plugins/hai-phat-vina-core`. Không commit khóa, mật khẩu, token hoặc wp-config/database dump. Token dispatch được truyền bằng SSH stdin từ file tạm quyền 0600; không có trong command line, database WordPress hay thư mục public.
 
 ## Yêu cầu server
 
-SSH, rsync, bash, flock, PHP CLI 7.4+ với mysqli và WordPress 6.6+. Tài khoản deploy cần ghi thư mục theme/plugin, uploads cho việc nhập ảnh mẫu cũ, file maintenance, và một thư mục backup ngoài document root. Theme Hải Phát Vina phải đang active; workflow không chuyển một website đang dùng theme khác.
+SSH, rsync, bash, flock, crontab, PHP CLI 7.4+ với mysqli/proc_open và WordPress 6.6+. Tài khoản deploy cần ghi thư mục theme/plugin, uploads cho việc nhập ảnh mẫu cũ, file maintenance, một thư mục backup ngoài document root và crontab của chính tài khoản đó. PHP chạy web cần đọc được thư mục riêng này nếu dùng WP-Cron qua request; cron CLI của tài khoản deploy luôn xử lý hàng đợi độc lập với lượt truy cập. Theme Hải Phát Vina phải đang active; workflow không chuyển một website đang dùng theme khác.
 
 ## Các bước deploy
 
@@ -35,12 +36,18 @@ Pipeline không sync database từ local, không tạo tài khoản QA trên hos
 
 File Word cho người dùng nằm ngoài repo. README trong repo chỉ dành cho kỹ thuật/vận hành.
 
-## Đồng bộ ngược thiết kế
+## Đồng bộ ngược thiết kế theo sự kiện
 
-`.github/workflows/sync-design.yml` chạy ở phút 7/22/37/52 mỗi giờ, hoặc Run workflow trên `main`. Lịch GitHub có thể trễ; repository public không hoạt động trong thời gian dài cũng có thể bị GitHub tắt lịch, cần kiểm tra trạng thái workflow khi bảo trì.
+Trước khi merge bản chuyển đổi, thêm `DESIGN_SYNC_DISPATCH_TOKEN` vào environment `production` và bảo đảm hosting cho phép tài khoản deploy dùng crontab. Workflow kiểm tra token/crontab trước khi đổi code. Bản mới bỏ `schedule` của sync; không merge khi chưa có các điều kiện này, vì code cũ trên hosting chưa tự gửi sự kiện.
 
-Workflow dùng cùng environment/secrets SSH với deploy và giữ shared lock trên server trong lúc xuất, tránh đọc giữa một lần migration. Concurrency group riêng tránh lịch đồng bộ hủy một deploy đang chờ. Nó chạy CLI xuất nguồn qua stdin, không tạo endpoint web hoặc đặt GitHub token trên hosting. Chỉ đọc thiết kế đã công khai, xác thực đường dẫn/metadata rồi cập nhật `site-design/current/` qua nhánh riêng. Nhánh này dành cho tự động hóa; chỉnh code trên nhánh khác. Không có force-push, auto-approve hoặc auto-merge.
+Sau khi deploy healthy, `configure-design-sync.php` ghi `design-sync-config.php` và `run-design-sync.php` quyền 0600 trong `haiphat-deploy-backups/` ngoài document root. Nó thêm đúng một cron mỗi phút, dùng marker riêng, giữ các cron đang có và lưu bản crontab trước thay đổi. Cron đọc cờ chờ và chỉ xuất nội dung khi có tác vụ đến hạn; không polling nội dung. Không tắt WP-Cron của các plugin khác. Khi kích hoạt lần đầu có một snapshot bắt kịp các sửa đổi từ lần sync cũ; những lần cấu hình sau không tạo snapshot kích hoạt lại. Đổi token secret rồi Run workflow deploy trên `main` để cập nhật token riêng trên hosting.
 
-Trong Settings → Actions → General cần bật **Allow GitHub Actions to create and approve pull requests** để token Actions tạo PR. Quyền mặc định vẫn `read`; chỉ workflow đồng bộ xin `contents: write` và `pull-requests: write`. GitHub gom tạo và duyệt PR trong cùng một setting, nhưng workflow này không duyệt PR. PR do bot tạo có thể cần người có quyền write bấm Approve workflows to run để chạy bộ kiểm thử PR; bản xuất luôn được validator kiểm tra ngay trong workflow đồng bộ. Merge vào `main` vẫn chạy CI đầy đủ trước deploy.
+Các hook của Core đánh dấu generation và gom khoảng 90 giây từ lần lưu cuối. Worker dùng bộ xuất hiện có để so SHA-256 với snapshot đã đồng bộ thành công. Chỉ hash khác mới gọi API `workflow_dispatch` cho `sync-design.yml` trên `main`. API chỉ nhận hash để theo dõi, không nhận nội dung website. Token này chỉ có quyền Actions trong repo; token tạo commit/PR vẫn là `GITHUB_TOKEN` bên trong Actions.
 
-Nếu nguồn không đổi, workflow không tạo commit hoặc đổi tiêu đề PR. Nếu có thay đổi, commit và tiêu đề PR mang thời điểm đồng bộ đến giây theo múi giờ `Asia/Ho_Chi_Minh`; một branch/PR mở gom toàn bộ các lần sửa cho tới khi merge. Trang unpublish/xóa biến mất khỏi snapshot hiện tại ở lần chạy kế tiếp; bản cũ vẫn còn trong Git history. Snapshot là nguồn thiết kế để review/khôi phục thủ công, không tự nhập lại lên website. Việc đồng bộ không bao gồm bài viết, dữ liệu khách hoặc file ảnh. Chi tiết tại `site-design/README.md`.
+Workflow dùng environment/secrets SSH hiện có và shared deploy lock, xuất qua CLI stdin, không tạo endpoint web. Nó xác thực đường dẫn/metadata, cập nhật `site-design/current/` rồi ACK qua SSH đúng hash/generation đã xuất. ACK sau khi Git/PR thành công; API accepted không xóa cờ. Retry lỗi mạng tăng dần từ 1 phút đến 6 giờ; chờ ACK bắt đầu 15 phút và tăng tới 6 giờ nếu cùng snapshot liên tục không hoàn tất. Save mới vẫn được xử lý sớm, kể cả đang chờ ACK cũ. Các CLI deploy/export/ACK không phát lại sự kiện sync.
+
+Trong Settings → Actions → General cần bật **Allow GitHub Actions to create and approve pull requests** để token Actions tạo PR. Quyền mặc định vẫn `read`; chỉ workflow sync xin `contents: write` và `pull-requests: write`. Workflow không auto-approve/auto-merge. PR được tạo bằng `GITHUB_TOKEN` không tự kích hoạt workflow `pull_request`; validator luôn chạy ngay trong sync, và merge `main` vẫn chạy CI đầy đủ trước kiểm tra/deploy production.
+
+Nếu nguồn không đổi, không gọi Actions từ worker; một lần sync thủ công/retry cũng không tạo commit hoặc đổi tiêu đề PR nếu không có diff. Commit/tiêu đề PR ghi giờ Việt Nam đến giây; một branch/PR mở gom các lần sửa cho tới khi merge. Xóa/unpublish loại nguồn khỏi snapshot nhưng Git history giữ bản cũ. Snapshot chỉ dành cho review/khôi phục thủ công, không tự nhập lại website. Phạm vi xuất giữ nguyên, xem `site-design/README.md`.
+
+Nếu cần chẩn đoán, xem option `hpv_design_sync_last_error` (chỉ mã lỗi/thời điểm), cờ `hpv_design_sync_dirty_generation` và cron `hpv_design_sync_process` qua CLI quản trị hiện có. Kiểm tra lượt sync thất bại trên Actions. Nút Run workflow của sync trên `main` luôn dùng được để bắt kịp thủ công. Nếu quay về cơ chế cũ, khôi phục lịch trong workflow và gỡ riêng dòng crontab mang marker `hai-phat-vina-design-sync-`; không xóa các cron khác hay backup.

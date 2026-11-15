@@ -19,9 +19,9 @@ Yêu cầu: WordPress 6.6+, PHP CLI 7.4+, mysqli, SSH/rsync/bash/flock. Xem [v�
 
 ## Đồng bộ thiết kế từ WordPress về Git
 
-Workflow `Sync WordPress design` đọc thiết kế qua SSH khoảng mỗi 15 phút, kiểm tra nguồn xuất và tạo/cập nhật PR trên nhánh `automation/wordpress-design`. Chỉ xuất Trang công khai, mẫu trang, header/footer, styles và menu/mẫu đồng bộ được tham chiếu. Bài viết, dữ liệu nghiệp vụ và file ảnh tiếp tục nằm trên hosting; URL ảnh trong bố cục vẫn được lưu cùng mã block.
+Khi người dùng lưu thay đổi thuộc phạm vi thiết kế, Core đánh dấu một tác vụ nền và gom các lần lưu trong khoảng 90 giây. Worker trên hosting chỉ gọi `Sync WordPress design` khi hash của bản xuất khác bản đã đồng bộ thành công. Không có lịch quét WordPress trong GitHub Actions. Workflow vẫn đọc nguồn qua SSH, kiểm tra rồi tạo/cập nhật một PR trên nhánh `automation/wordpress-design`. Chỉ xuất Trang công khai, mẫu trang, header/footer, styles và menu/mẫu đồng bộ được tham chiếu. Bài viết, dữ liệu nghiệp vụ và file ảnh tiếp tục nằm trên hosting; URL ảnh trong bố cục vẫn được lưu cùng mã block.
 
-PR cập nhật bản nguồn tại `site-design/current/`, không tự merge hoặc ghi ngược vào database. Xem [phạm vi và cách sử dụng bản nguồn](site-design/README.md). Các quyền SSH dùng lại secret hiện có, token GitHub chỉ tồn tại trong Actions.
+PR cập nhật bản nguồn tại `site-design/current/`, không tự merge hoặc ghi ngược vào database. Merge chỉ thay đổi snapshot/tài liệu sẽ bỏ qua upload và deploy nếu code giống bản production đã healthy. Merge code theme/plugin hoặc lifecycle deploy mới triển khai; Run workflow của deploy cho phép triển khai chủ động. Xem [phạm vi bản nguồn](site-design/README.md) và [cấu hình token/worker trước khi chuyển đổi](.github/DEPLOYMENT.md). Token dispatch trên hosting chỉ cần quyền Actions; token tạo PR tiếp tục chỉ tồn tại trong Actions.
 
 ## Kiểm thử local
 
