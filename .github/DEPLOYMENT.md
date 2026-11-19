@@ -7,7 +7,7 @@ Push `main` kích hoạt `.github/workflows/deploy.yml`. Sau khi kiểm thử Wo
 - `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_PORT`.
 - `DEPLOY_PRIVATE_KEY`, `DEPLOY_KNOWN_HOSTS`.
 - `THEME_PATH`: đường dẫn tuyệt đối kết thúc `/wp-content/themes/hai-phat-vina`.
-- `DESIGN_SYNC_DISPATCH_TOKEN`: fine-grained PAT chỉ chọn repo `pvhoang27/haiphat`, quyền repository **Actions: Read and write**. Không cần Contents/Pull requests write cho token này. Đặt ngày hết hạn phù hợp và xoay token trước khi hết hạn.
+- `DESIGN_SYNC_DISPATCH_TOKEN`: fine-grained PAT chỉ chọn repo `pvhoang27/haiphat`, quyền repository **Actions: Read and write**. Không cần Contents/Pull requests write cho token này. Cấu hình hiện tại chọn **No expiration** theo yêu cầu vận hành; nếu tạo token có ngày hết hạn thì cần thay secret và chạy lại deploy trước ngày đó.
 
 Workflow suy ra WordPress root và `wp-content/plugins/hai-phat-vina-core`. Không commit khóa, mật khẩu, token hoặc wp-config/database dump. Token dispatch được truyền bằng SSH stdin từ file tạm quyền 0600; không có trong command line, database WordPress hay thư mục public.
 
