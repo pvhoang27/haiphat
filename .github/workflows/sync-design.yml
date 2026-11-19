@@ -1,11 +1,17 @@
 name: Sync WordPress design
 
 on:
+  # Cutover guard: remove after the production event worker dispatches and ACKs.
   schedule:
     - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
+    inputs:
+      snapshot_hash:
+        description: Informational hash from the WordPress queue; SSH export remains authoritative
+        required: false
+        type: string
 
-# Keep sync scheduling from replacing a pending production deploy. The CLI also
+# Keep sync events from replacing a pending production deploy. The CLI also
 # holds the server's shared deploy lock while reading the design.
 concurrency:
   group: hai-phat-vina-design-sync
@@ -53,11 +59,32 @@ jobs:
         run: |
           set -euo pipefail
           # Run the trusted CLI wrapper from this checkout over stdin; no upload,
-          # public endpoint or GitHub credential on the WordPress server.
+          # public endpoint. Dispatch credentials stay outside the web root.
           ssh -i ~/.ssh/haiphat_design -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
             "php -- '$WP_ROOT'" < dev/deploy/export-design.php > "$RUNNER_TEMP/wordpress-design.json"
       - name: Validate sources and create or update design PR
         run: bash dev/sync-design.sh "$RUNNER_TEMP/wordpress-design.json"
+      - name: Acknowledge the actual snapshot after the PR is saved
+        run: |
+          set -euo pipefail
+          python3 - "$RUNNER_TEMP/wordpress-design.json" >> "$GITHUB_ENV" <<'PY'
+          import importlib.util, json, pathlib, sys
+          spec = importlib.util.spec_from_file_location("sync_design", "dev/sync-design.py")
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          raw = pathlib.Path(sys.argv[1]).read_bytes()
+          module.validate(raw)
+          context = json.loads(raw)["sync"]
+          print("SNAPSHOT_HASH=" + context["hash"])
+          print("SYNC_GENERATION=" + context["generation"])
+          PY
+      - name: Confirm completion to the WordPress queue
+        run: |
+          set -euo pipefail
+          [[ "$SNAPSHOT_HASH" =~ ^[a-f0-9]{64}$ ]]
+          [[ -z "$SYNC_GENERATION" || "$SYNC_GENERATION" =~ ^[0-9]{10}:[a-f0-9]{32}$ ]]
+          ssh -i ~/.ssh/haiphat_design -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            "php -- '$WP_ROOT' '$SNAPSHOT_HASH' '$SYNC_GENERATION'" < dev/deploy/ack-design-sync.php
       - name: Remove temporary credentials and export
         if: always()
         run: rm -f ~/.ssh/haiphat_design "$RUNNER_TEMP/wordpress-design.json"

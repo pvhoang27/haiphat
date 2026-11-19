@@ -24,6 +24,7 @@ function hpvd_write_state($file, $state) {
 }
 function hpvd_load_wp($root) {
     if (!defined('DISABLE_WP_CRON')) { define('DISABLE_WP_CRON', true); }
+    if (!defined('HPV_DESIGN_SYNC_SUPPRESS')) { define('HPV_DESIGN_SYNC_SUPPRESS', true); }
     $_SERVER['REQUEST_METHOD'] = 'GET';
     $_SERVER['HTTP_HOST'] = 'localhost';
     require $root . '/wp-load.php';

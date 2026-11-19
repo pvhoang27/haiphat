@@ -65,6 +65,18 @@ class DesignSyncTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             sync.validate(json.dumps(data))
 
+    def test_sync_context_is_validated_and_not_written_as_source(self):
+        data = self.export()
+        data['sync'] = {'hash': 'a' * 64, 'generation': '1794700000:' + 'b' * 32}
+        self.assertEqual(sync.validate(json.dumps(data)), data['files'])
+        for bad in ('anything\nBAD=value', "$(touch /tmp/bad)", '../path', 'a' * 64):
+            data['sync']['generation'] = bad
+            with self.subTest(generation=bad), self.assertRaises(ValueError):
+                sync.validate(json.dumps(data))
+        data['sync'] = {'hash': 'not-a-hash', 'generation': ''}
+        with self.assertRaises(ValueError):
+            sync.validate(json.dumps(data))
+
 
 if __name__ == "__main__":
     unittest.main()

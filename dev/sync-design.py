@@ -13,8 +13,16 @@ def validate(raw):
     if len(raw) > MAX_BYTES:
         raise ValueError("Design export exceeds 20 MiB")
     data = json.loads(raw)
-    if not isinstance(data, dict) or set(data) != {"schema", "files"} or data["schema"] != 1:
+    if not isinstance(data, dict) or set(data) not in ({"schema", "files"}, {"schema", "files", "sync"}) or data["schema"] != 1:
         raise ValueError("Unsupported export envelope")
+    if "sync" in data:
+        sync = data["sync"]
+        if not isinstance(sync, dict) or set(sync) != {"hash", "generation"}:
+            raise ValueError("Invalid sync context")
+        if not isinstance(sync["hash"], str) or not re.fullmatch(r"[a-f0-9]{64}", sync["hash"]):
+            raise ValueError("Invalid snapshot hash")
+        if not isinstance(sync["generation"], str) or (sync["generation"] and not re.fullmatch(r"[0-9]{10}:[a-f0-9]{32}", sync["generation"])):
+            raise ValueError("Invalid sync generation")
     files = data["files"]
     if not isinstance(files, dict) or len(files) > 5000 or not {"manifest.json", "global-styles.json"} <= files.keys():
         raise ValueError("Incomplete or oversized export")

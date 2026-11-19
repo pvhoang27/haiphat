@@ -57,4 +57,11 @@ if ($hpv_fixture_action === 'install') {
     wp_update_post(wp_slash(array('ID' => $id, 'post_content' => get_post_field('post_content', $id) . '<!-- wp:paragraph --><p>Khách sửa sau bàn giao; \' chữ và \\ đường dẫn.</p><!-- /wp:paragraph -->')));
     update_option('hpv_deploy_customer_edit', true);
     echo "Simulated customer edit saved.\n";
+} elseif ($hpv_fixture_action === 'check-sync-context') {
+    require_once WP_PLUGIN_DIR . '/hai-phat-vina-core/includes/design-export.php';
+    $export = json_decode(stream_get_contents(STDIN), true);
+    $context = $export['sync'];
+    unset($export['sync']);
+    hpv_deploy_assert(hash('sha256', hpv_design_json($export)) === $context['hash'], 'SSH export ACK hash matches exactly the exported canonical snapshot');
+    hpv_deploy_assert($context['generation'] === hpv_design_sync_generation(), 'SSH export captures the pending customer generation');
 }

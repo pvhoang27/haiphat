@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      preflight_only:
+        description: Check hosting prerequisites without changing production
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: hai-phat-vina-${{ github.ref == 'refs/heads/main' && 'production' || github.ref }}
@@ -59,6 +65,8 @@ jobs:
           docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-site-identity.php
           docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-editable-blocks.php
           docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-design-export.php
+          docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-design-sync.php
+          docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-design-sync-config.php
           docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-customer-structure.php
           docker compose -f dev/compose.yaml exec -T wordpress php /opt/hpv-checks/verify-analytics.php
       - name: Verify legacy upgrade, repeat deployment and automatic rollback
@@ -68,8 +76,8 @@ jobs:
         run: docker compose -f dev/compose.yaml down --volumes
 
   deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    name: Deploy production theme and business plugin
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.preflight_only == true))
+    name: Check production version and deploy changed code
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -81,6 +89,8 @@ jobs:
       THEME_PATH: ${{ secrets.THEME_PATH }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Validate deployment configuration
         shell: bash
         run: |
@@ -106,13 +116,53 @@ jobs:
           chmod 600 ~/.ssh/haiphat_deploy
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
+      - name: Compare with the last healthy production release
+        id: changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PREFLIGHT_ONLY: ${{ inputs.preflight_only == true && 'true' || 'false' }}
+        run: |
+          set -euo pipefail
+          if [ "$PREFLIGHT_ONLY" = true ]; then
+            changed=false
+          elif [ "$EVENT_NAME" = workflow_dispatch ]; then
+            changed=true
+          else
+            deployed="$(ssh -i ~/.ssh/haiphat_deploy -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+              "php -- '$WP_ROOT'" < dev/deploy/read-deployed-revision.php)"
+            [[ -z "$deployed" || "$deployed" =~ ^[a-f0-9]{40}$ ]]
+            changed="$(python3 dev/changed-deploy.py "$deployed" "$GITHUB_SHA")"
+          fi
+          printf 'deploy=%s\n' "$changed" >> "$GITHUB_OUTPUT"
+          if [ "$PREFLIGHT_ONLY" = true ]; then
+            printf '%s\n' 'Read-only hosting preflight; production changes are disabled.' >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$changed" = false ]; then
+            printf '%s\n' 'Production code is unchanged; skipping upload, maintenance and deployment.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Check hosting prerequisites without changing WordPress or cron
+        if: inputs.preflight_only == true
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/haiphat_deploy -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            "php -- '$WP_ROOT'" < dev/deploy/preflight-design-sync.php
+      - name: Require the dispatch credential before changing production
+        if: steps.changes.outputs.deploy == 'true'
+        env:
+          DESIGN_SYNC_DISPATCH_TOKEN: ${{ secrets.DESIGN_SYNC_DISPATCH_TOKEN }}
+        run: |
+          if [ -z "$DESIGN_SYNC_DISPATCH_TOKEN" ]; then
+            printf '%s\n' 'Set production secret DESIGN_SYNC_DISPATCH_TOKEN before deploying the event-driven sync release.' >&2
+            exit 1
+          fi
       - name: Verify server and prepare release staging
+        if: steps.changes.outputs.deploy == 'true'
         shell: bash
         run: |
           set -euo pipefail
           ssh -i ~/.ssh/haiphat_deploy -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
-            "test -f '$WP_ROOT/wp-load.php' && test -f '$WP_ROOT/wp-content/themes/hai-phat-vina/style.css' && command -v php && command -v flock && mkdir -p '$WP_ROOT/wp-content/.hpv-releases/$GITHUB_SHA/theme' '$WP_ROOT/wp-content/.hpv-releases/$GITHUB_SHA/plugin'"
+            "test -f '$WP_ROOT/wp-load.php' && test -f '$WP_ROOT/wp-content/themes/hai-phat-vina/style.css' && command -v php && command -v flock && command -v crontab && mkdir -p '$WP_ROOT/wp-content/.hpv-releases/$GITHUB_SHA/theme' '$WP_ROOT/wp-content/.hpv-releases/$GITHUB_SHA/plugin'"
       - name: Upload theme, plugin and deployment lifecycle
+        if: steps.changes.outputs.deploy == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -121,12 +171,35 @@ jobs:
           rsync --archive --compress --delay-updates --exclude='.DS_Store' -e "$transport" hai-phat-vina/ "$destination/theme/"
           rsync --archive --compress --delay-updates --exclude='.DS_Store' -e "$transport" hai-phat-vina-core/ "$destination/plugin/"
           rsync --archive --compress -e "$transport" dev/deploy/ "$destination/"
+      - name: Prepare private sync configuration and check hosting prerequisites
+        if: steps.changes.outputs.deploy == 'true'
+        env:
+          DESIGN_SYNC_DISPATCH_TOKEN: ${{ secrets.DESIGN_SYNC_DISPATCH_TOKEN }}
+        run: |
+          set -euo pipefail
+          umask 077
+          python3 - "$RUNNER_TEMP/design-sync-config.json" <<'PY'
+          import json, os, pathlib, sys
+          pathlib.Path(sys.argv[1]).write_text(json.dumps({
+              "token": os.environ["DESIGN_SYNC_DISPATCH_TOKEN"],
+              "repository": os.environ["GITHUB_REPOSITORY"],
+          }))
+          PY
+          ssh -i ~/.ssh/haiphat_deploy -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            "php '$WP_ROOT/wp-content/.hpv-releases/$GITHUB_SHA/configure-design-sync.php' '$WP_ROOT' --check-host" < "$RUNNER_TEMP/design-sync-config.json"
       - name: Back up, activate, migrate and verify production
+        if: steps.changes.outputs.deploy == 'true'
         shell: bash
         run: |
           set -euo pipefail
           ssh -i ~/.ssh/haiphat_deploy -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
             "bash '$WP_ROOT/wp-content/.hpv-releases/$GITHUB_SHA/remote.sh' '$WP_ROOT' '$GITHUB_SHA'"
+      - name: Configure private WordPress dispatch and hosting queue worker
+        if: steps.changes.outputs.deploy == 'true'
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/haiphat_deploy -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            "php '$WP_ROOT/wp-content/.hpv-releases/$GITHUB_SHA/configure-design-sync.php' '$WP_ROOT'" < "$RUNNER_TEMP/design-sync-config.json"
       - name: Remove deployment key
         if: always()
-        run: rm -f ~/.ssh/haiphat_deploy
+        run: rm -f ~/.ssh/haiphat_deploy "$RUNNER_TEMP/design-sync-config.json"

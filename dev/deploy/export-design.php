@@ -7,6 +7,7 @@ if (!preg_match('~^/[a-zA-Z0-9_./-]+$~D', $hpv_export_root) || strpos($hpv_expor
 }
 if (is_file($hpv_export_root . '/.maintenance')) { fwrite(STDERR, "Deployment in progress; retry export later.\n"); exit(1); }
 define('DISABLE_WP_CRON', true);
+define('HPV_DESIGN_SYNC_SUPPRESS', true);
 $_SERVER['HTTP_HOST'] = 'localhost';
 $_SERVER['REQUEST_METHOD'] = 'GET';
 ob_start();
@@ -26,6 +27,7 @@ try {
     if (is_file($hpv_export_root . '/.maintenance')) { throw new RuntimeException('Deployment in progress; retry design export later.'); }
     require_once $hpv_export_root . '/wp-content/plugins/hai-phat-vina-core/includes/design-export.php';
     // A consistent database snapshot also covers edits saved while export runs.
+    $hpv_generation = function_exists('hpv_design_sync_generation') ? hpv_design_sync_generation() : '';
     $wpdb->query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
     if ($wpdb->query('START TRANSACTION WITH CONSISTENT SNAPSHOT') === false) { throw new RuntimeException('Cannot start consistent design snapshot.'); }
     // Clear process-local cached entries before reading the saved design.
@@ -36,6 +38,9 @@ try {
     ob_end_clean();
     $hpv_export_json = hpv_design_json($hpv_design_export);
     if (strlen($hpv_export_json) > 20 * 1024 * 1024) { throw new RuntimeException('Design export exceeds 20 MiB.'); }
+    // ACK the actual exported snapshot, never a dispatch input or later DB read.
+    $hpv_design_export['sync'] = array('hash' => hash('sha256', $hpv_export_json), 'generation' => $hpv_generation);
+    $hpv_export_json = hpv_design_json($hpv_design_export);
     flock($hpv_design_lock, LOCK_UN);
     fclose($hpv_design_lock);
     echo $hpv_export_json;

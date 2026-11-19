@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Hải Phát Vina Core
  * Description: Lưu trữ sản phẩm, công trình, thông tin công ty và yêu cầu báo giá độc lập với giao diện. Cung cấp vai trò Quản lý website để bàn giao cho người dùng.
- * Version: 1.0.2
+ * Version: 1.0.3
  * Requires at least: 6.6
  * Requires PHP: 7.4
  * Author: Hải Phát Vina
@@ -24,7 +24,7 @@ if ($hpv_core_theme->get_template() === 'hai-phat-vina' && version_compare((stri
 }
 unset($hpv_core_theme);
 
-define('HPV_CORE_VERSION', '1.0.2');
+define('HPV_CORE_VERSION', '1.0.3');
 define('HPV_CORE_URL', plugin_dir_url(__FILE__));
 require_once __DIR__ . '/includes/settings.php';
 require_once __DIR__ . '/includes/site-identity.php';
@@ -34,6 +34,7 @@ require_once __DIR__ . '/includes/admin.php';
 require_once __DIR__ . '/includes/blocks.php';
 require_once __DIR__ . '/includes/analytics.php';
 require_once __DIR__ . '/includes/seo.php';
+require_once __DIR__ . '/includes/design-sync.php';
 
 function hpv_core_activate() {
     hpv_setup_business_roles();
