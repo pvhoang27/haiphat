@@ -38,7 +38,9 @@ File Word cho người dùng nằm ngoài repo. README trong repo chỉ dành ch
 
 ## Đồng bộ ngược thiết kế theo sự kiện
 
-Trước khi merge bản chuyển đổi, thêm `DESIGN_SYNC_DISPATCH_TOKEN` vào environment `production` và bảo đảm hosting cho phép tài khoản deploy dùng crontab. Workflow kiểm tra token/crontab trước khi đổi code. Bản mới bỏ `schedule` của sync; không merge khi chưa có các điều kiện này, vì code cũ trên hosting chưa tự gửi sự kiện.
+Trước khi merge bản chuyển đổi, thêm `DESIGN_SYNC_DISPATCH_TOKEN` vào environment `production` và bảo đảm hosting cho phép tài khoản deploy dùng crontab. Có thể Run workflow deploy với `preflight_only=true` trên nhánh triển khai để kiểm tra SSH/PHP/crontab mà không upload, sửa database hoặc sửa cron. Chạy thủ công trên nhánh khác chỉ được phép với cờ preflight; triển khai thật vẫn chỉ trên `main`. Workflow cũng kiểm tra token/crontab trước khi đổi code.
+
+Chuyển đổi theo hai bước: giữ lịch sync cũ trong lần triển khai Core mới, xác nhận worker production đã tự dispatch và workflow đã ACK thành công, rồi mới gỡ `schedule` trong một thay đổi workflow riêng. Nếu cấu hình hosting/token chưa hoạt động thì giữ lịch cũ để không mất đồng bộ. Trạng thái vận hành cuối cùng chỉ có sự kiện và nút Run workflow, không có schedule định kỳ.
 
 Sau khi deploy healthy, `configure-design-sync.php` ghi `design-sync-config.php` và `run-design-sync.php` quyền 0600 trong `haiphat-deploy-backups/` ngoài document root. Nó thêm đúng một cron mỗi phút, dùng marker riêng, giữ các cron đang có và lưu bản crontab trước thay đổi. Cron đọc cờ chờ và chỉ xuất nội dung khi có tác vụ đến hạn; không polling nội dung. Không tắt WP-Cron của các plugin khác. Khi kích hoạt lần đầu có một snapshot bắt kịp các sửa đổi từ lần sync cũ; những lần cấu hình sau không tạo snapshot kích hoạt lại. Đổi token secret rồi Run workflow deploy trên `main` để cập nhật token riêng trên hosting.
 

@@ -1,6 +1,9 @@
 name: Sync WordPress design
 
 on:
+  # Cutover guard: remove after the production event worker dispatches and ACKs.
+  schedule:
+    - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
     inputs:
       snapshot_hash:

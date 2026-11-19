@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      preflight_only:
+        description: Check hosting prerequisites without changing production
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: hai-phat-vina-${{ github.ref == 'refs/heads/main' && 'production' || github.ref }}
@@ -70,7 +76,7 @@ jobs:
         run: docker compose -f dev/compose.yaml down --volumes
 
   deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.preflight_only == true))
     name: Check production version and deploy changed code
     needs: test
     runs-on: ubuntu-latest
@@ -114,9 +120,12 @@ jobs:
         id: changes
         env:
           EVENT_NAME: ${{ github.event_name }}
+          PREFLIGHT_ONLY: ${{ inputs.preflight_only == true && 'true' || 'false' }}
         run: |
           set -euo pipefail
-          if [ "$EVENT_NAME" = workflow_dispatch ]; then
+          if [ "$PREFLIGHT_ONLY" = true ]; then
+            changed=false
+          elif [ "$EVENT_NAME" = workflow_dispatch ]; then
             changed=true
           else
             deployed="$(ssh -i ~/.ssh/haiphat_deploy -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
@@ -125,9 +134,17 @@ jobs:
             changed="$(python3 dev/changed-deploy.py "$deployed" "$GITHUB_SHA")"
           fi
           printf 'deploy=%s\n' "$changed" >> "$GITHUB_OUTPUT"
-          if [ "$changed" = false ]; then
+          if [ "$PREFLIGHT_ONLY" = true ]; then
+            printf '%s\n' 'Read-only hosting preflight; production changes are disabled.' >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$changed" = false ]; then
             printf '%s\n' 'Production code is unchanged; skipping upload, maintenance and deployment.' >> "$GITHUB_STEP_SUMMARY"
           fi
+      - name: Check hosting prerequisites without changing WordPress or cron
+        if: inputs.preflight_only == true
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/haiphat_deploy -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            "php -- '$WP_ROOT'" < dev/deploy/preflight-design-sync.php
       - name: Require the dispatch credential before changing production
         if: steps.changes.outputs.deploy == 'true'
         env:
