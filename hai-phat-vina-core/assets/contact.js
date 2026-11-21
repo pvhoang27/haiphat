@@ -33,7 +33,7 @@
         form.querySelector('[name="hpv_nonce"]').value = nonce.data.nonce;
         const data = new FormData(form);
         data.set('hpv_ajax', '1');
-        const response = await fetch(form.action, {
+        const response = await fetch(form.getAttribute('action'), {
           method: 'POST', credentials: 'same-origin', body: data, signal: controller.signal
         });
         const result = await response.json();
