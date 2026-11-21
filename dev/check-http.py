@@ -31,6 +31,12 @@ for path in ['/', '/san-pham/', '/san-pham/mai-xep-luon-song/', '/nhom-san-pham/
     code, body, _ = request(path)
     check(code == 200 and len(re.findall(r'<h1(?:\s|>)', body)) == 1 and not re.search(r'Warning:|Notice:|Fatal error:', body), f'Page renders cleanly with one H1: {path}')
 
+code, body, _ = request('/mai-xep-luon-song/')
+check(code == 200 and 'Mái xếp' in body, 'Product renders at the root URL')
+code, body, headers = request('/san-pham/mai-xep-luon-song/', redirect=False)
+check(code == 301 and headers.get('Location', '').rstrip('/').endswith('127.0.0.1:8787/mai-xep-luon-song'), 'Old /san-pham/ product URL redirects permanently')
+code, body, _ = request('/san-pham/')
+check(code == 200 and '/mai-xep-luon-song/' in body and '/san-pham/mai-xep-luon-song/' not in body, 'Product archive stays and links to root URLs')
 code, body, _ = request('/this-page-does-not-exist/')
 check(code == 404 and 'Trang này không còn ở đây' in body, 'Custom 404 page returns HTTP 404')
 code, body, _ = request('/?s=HDPE&post_type=hpv_product')

@@ -73,6 +73,46 @@ try {
     $new_header = $header->content . '<!-- wp:paragraph --><p>Khách chỉnh đầu trang.</p><!-- /wp:paragraph -->';
     wp_update_post(wp_slash(array('ID' => $saved['header'], 'post_content' => $new_header)));
     hpv_structure_assert(hpv_setup_customer_structure() === true && strpos(get_post_field('post_content', $editable), 'Nội dung khách tự viết') !== false && get_post_field('post_content', $saved['header']) === $new_header, 'Repeated deployment preserves customer edits');
+
+    // Footer SEO request: no H2 column titles; product links are H3; other edits kept.
+    $legacy_footer = get_post_field('post_content', $saved['footer']);
+    $legacy_footer = preg_replace('~<!-- wp:paragraph \{"className":"hpv-footer-title"\} -->\s*<p class="hpv-footer-title">(.*?)</p>\s*<!-- /wp:paragraph -->~s', "<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">$1</h2>\n<!-- /wp:heading -->", $legacy_footer);
+    $legacy_footer = preg_replace('~<!-- wp:heading \{"level":3,"className":"hpv-footer-product"\} -->\s*<h3 class="wp-block-heading hpv-footer-product">(.*?)</h3>\s*<!-- /wp:heading -->~s', "<!-- wp:paragraph -->\n<p>$1</p>\n<!-- /wp:paragraph -->", $legacy_footer);
+    wp_update_post(wp_slash(array('ID' => $saved['footer'], 'post_content' => $legacy_footer)));
+    hpv_structure_assert(substr_count($legacy_footer, '<h2') === 4 && strpos($legacy_footer, '<h3') === false, 'Fixture reproduces the deployed footer with H2 titles');
+    $headings = hpv_footer_heading_levels();
+    if (is_wp_error($headings)) { throw new RuntimeException($headings->get_error_message()); }
+    $footer_now = get_post_field('post_content', $saved['footer']);
+    hpv_structure_assert(strpos($footer_now, '<h2') === false && substr_count($footer_now, '<p class="hpv-footer-title">') === 4, 'Footer column titles are plain text, not H2');
+    hpv_structure_assert(substr_count($footer_now, '<h3 class="wp-block-heading hpv-footer-product"><a') === 7, 'Each footer product link is an H3');
+    hpv_structure_assert(strpos($footer_now, '<h3 class="wp-block-heading hpv-footer-product"><a href="' . get_permalink($saved['pages']['chinh-sach-bao-mat'])) === false && strpos($footer_now, 'Liên kết khách tự thêm') !== false, 'Policy links and customer additions are not changed');
+    hpv_structure_assert(get_option('hpv_footer_headings_backup_v1')['content'] === $legacy_footer && hpv_footer_heading_levels() === true && get_post_field('post_content', $saved['footer']) === $footer_now, 'Footer saved before change and not rewritten again');
+    hpv_structure_assert(strpos(hpv_site_patterns()['footer'], '<h2') === false && substr_count(hpv_site_patterns()['footer'], 'hpv-footer-product') >= 7, 'Resetting the footer keeps the new heading levels');
+
+    // Appearance → Menus drives the header and offers products.
+    $extra = wp_insert_post(array('post_type' => 'hpv_product', 'post_status' => 'publish', 'post_title' => 'Bạt sọc kiểm thử', 'post_name' => 'bat-soc-kiem-thu'));
+    // Production: the owner created an empty "Main Menu" for the primary location.
+    $empty_menu = wp_create_nav_menu('Main Menu');
+    set_theme_mod('nav_menu_locations', array_merge((array) get_theme_mod('nav_menu_locations', array()), array('primary' => $empty_menu)));
+    hpv_structure_assert(strpos(do_blocks(get_block_template(get_stylesheet() . '//header', 'wp_template_part')->content), 'Bạt xây dựng') !== false, 'Header keeps its menu while Menu chính is empty');
+    $seeded = hpv_seed_primary_classic_menu();
+    if (is_wp_error($seeded)) { throw new RuntimeException($seeded->get_error_message()); }
+    $locations = get_nav_menu_locations();
+    hpv_structure_assert((int) $locations['primary'] === (int) $empty_menu, 'The owner\'s own menu is filled rather than replaced');
+    $items = wp_get_nav_menu_items($locations['primary']);
+    $titles = wp_list_pluck($items, 'title');
+    hpv_structure_assert(in_array('Bạt sọc kiểm thử', $titles, true) && in_array('Mái xếp lượn sóng', $titles, true) && in_array('Kiến thức', $titles, true) && in_array('Liên hệ', $titles, true), 'Primary menu seeded with header links and every published product');
+    $rendered = do_blocks(get_block_template(get_stylesheet() . '//header', 'wp_template_part')->content);
+    hpv_structure_assert(strpos($rendered, 'Bạt sọc kiểm thử') !== false && strpos($rendered, 'wp-block-navigation-submenu') !== false, 'Header renders the Appearance → Menus menu with its product dropdown');
+    wp_update_nav_menu_item($locations['primary'], 0, array('menu-item-title' => 'Mục khách tự thêm', 'menu-item-url' => home_url('/khach-them/'), 'menu-item-status' => 'publish'));
+    hpv_structure_assert(strpos(do_blocks(get_block_template(get_stylesheet() . '//header', 'wp_template_part')->content), 'Mục khách tự thêm') !== false, 'Later edits in Appearance → Menus appear in the header');
+    hpv_structure_assert(hpv_seed_primary_classic_menu() === true && count(wp_get_nav_menu_items($locations['primary'])) === count($items) + 1, 'Repeated deployment does not refill the customer menu');
+    $hidden = apply_filters('hidden_meta_boxes', array('add-post-type-hpv_product', 'add-hpv_category', 'add-post_tag'), (object) array('id' => 'nav-menus'));
+    hpv_structure_assert(!in_array('add-post-type-hpv_product', $hidden, true) && !in_array('add-hpv_category', $hidden, true), 'Products and product groups are visible in Appearance → Menus');
+    hpv_structure_assert(get_permalink($extra) === home_url('/bat-soc-kiem-thu/'), 'Product URL has no /san-pham/ base');
+    wp_insert_post(array('post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Trùng slug', 'post_name' => 'trung-slug-kiem-thu'));
+    $clash = wp_insert_post(array('post_type' => 'hpv_product', 'post_status' => 'publish', 'post_title' => 'Trùng slug', 'post_name' => 'trung-slug-kiem-thu'));
+    hpv_structure_assert(get_permalink($clash) === home_url('/san-pham/trung-slug-kiem-thu/'), 'A product sharing a page slug keeps its /san-pham/ URL');
 } finally {
     $wpdb->query('ROLLBACK');
     wp_cache_flush();

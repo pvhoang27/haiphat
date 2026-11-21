@@ -57,7 +57,7 @@ function hpv_customer_save_part($slug, $title, $content) {
 function hpv_customer_footer_markup($ids) {
     $footer_products = array();
     foreach (array_slice(hpv_customer_structure_pages(), 0, 7, true) as $slug => $title) {
-        $footer_products[] = hpv_pattern_paragraph(hpv_pattern_link($title, get_permalink($ids[$slug])));
+        $footer_products[] = hpv_pattern_heading(hpv_pattern_link($title, get_permalink($ids[$slug])), 3, 'hpv-footer-product');
     }
     $policies = array();
     foreach (array('chinh-sach-bao-mat', 'chinh-sach-ban-hang', 'chinh-sach-bao-hanh-doi-tra') as $slug) {
@@ -65,10 +65,10 @@ function hpv_customer_footer_markup($ids) {
     }
     return hpv_pattern_group(array(
         hpv_pattern_group(array(hpv_pattern_columns(array(
-            array(hpv_pattern_heading('Thông tin công ty', 2), hpv_pattern_block('hpv/company-info', array('layout' => 'footer'))),
-            array(hpv_pattern_heading('Danh mục sản phẩm chính', 2), hpv_pattern_group($footer_products, 'hpv-footer-links')),
-            array(hpv_pattern_heading('Chính sách', 2), hpv_pattern_group($policies, 'hpv-footer-links')),
-            array(hpv_pattern_heading('Danh sách chi nhánh', 2), hpv_pattern_block('hpv/company-info', array('layout' => 'footer-branches')), hpv_pattern_paragraph(hpv_pattern_link('Xem danh sách chi nhánh', get_permalink($ids['danh-sach-chi-nhanh'])))),
+            array(hpv_pattern_paragraph('Thông tin công ty', 'hpv-footer-title'), hpv_pattern_block('hpv/company-info', array('layout' => 'footer'))),
+            array(hpv_pattern_paragraph('Danh mục sản phẩm chính', 'hpv-footer-title'), hpv_pattern_group($footer_products, 'hpv-footer-links')),
+            array(hpv_pattern_paragraph('Chính sách', 'hpv-footer-title'), hpv_pattern_group($policies, 'hpv-footer-links')),
+            array(hpv_pattern_paragraph('Danh sách chi nhánh', 'hpv-footer-title'), hpv_pattern_block('hpv/company-info', array('layout' => 'footer-branches')), hpv_pattern_paragraph(hpv_pattern_link('Xem danh sách chi nhánh', get_permalink($ids['danh-sach-chi-nhanh'])))),
         ), 'hpv-footer-grid')), '', '', array('align' => 'wide', 'layout' => array('type' => 'default'))),
         hpv_pattern_group(array(hpv_pattern_paragraph('© Hải Phát Vina.')), 'hpv-footer-bottom', '', array('align' => 'wide', 'layout' => array('type' => 'flex'))),
     ), 'hpv-site-footer', 'Chân trang', array('align' => 'full'));
@@ -270,4 +270,54 @@ function hpv_correct_customer_links(&$blocks, $pages) {
         if (!empty($block['innerBlocks'])) { hpv_correct_customer_links($block['innerBlocks'], $pages); }
     }
     unset($block);
+}
+
+
+/** Customer SEO request: footer column titles are not headings; product links are H3. */
+function hpv_footer_title_block($block) {
+    if (!preg_match('~<h[1-6][^>]*>(.*)</h[1-6]>~s', $block['innerHTML'], $match)) { return $block; }
+    return parse_blocks(hpv_pattern_paragraph(trim($match[1]), 'hpv-footer-title'))[0];
+}
+
+function hpv_footer_product_block($block) {
+    if (!preg_match('~^\s*<p[^>]*>(.*)</p>\s*$~s', $block['innerHTML'], $match)) { return $block; }
+    return parse_blocks(hpv_pattern_heading(trim($match[1]), 3, 'hpv-footer-product'))[0];
+}
+
+function hpv_footer_heading_blocks(&$blocks, &$changed, $in_products = false) {
+    foreach ($blocks as &$block) {
+        if ($block['blockName'] === 'core/heading' && (isset($block['attrs']['level']) ? (int) $block['attrs']['level'] : 2) === 2) {
+            $block = hpv_footer_title_block($block);
+            $changed++;
+        } elseif ($in_products && $block['blockName'] === 'core/paragraph' && strpos($block['innerHTML'], '<a ') !== false) {
+            $block = hpv_footer_product_block($block);
+            $changed++;
+        } elseif (!empty($block['innerBlocks'])) {
+            // The product column is the one titled "...sản phẩm..." (as the customer named it).
+            $products = $in_products;
+            if ($block['blockName'] === 'core/column') {
+                $title = isset($block['innerBlocks'][0]) ? wp_strip_all_tags($block['innerBlocks'][0]['innerHTML']) : '';
+                $products = mb_stripos($title, 'sản phẩm') !== false;
+            }
+            hpv_footer_heading_blocks($block['innerBlocks'], $changed, $products);
+        }
+    }
+    unset($block);
+}
+
+function hpv_footer_heading_levels() {
+    if (get_option('hpv_footer_headings_v1')) { return true; }
+    $footer = get_block_template(get_stylesheet() . '//footer', 'wp_template_part');
+    if (!$footer) { return new WP_Error('hpv_footer_missing', 'Không tìm thấy chân trang.'); }
+    $blocks = parse_blocks($footer->content);
+    if (empty($footer->wp_id)) { $blocks = resolve_pattern_blocks($blocks); }
+    $changed = 0;
+    hpv_footer_heading_blocks($blocks, $changed);
+    if ($changed) {
+        update_option('hpv_footer_headings_backup_v1', array('content' => $footer->content, 'post_id' => $footer->wp_id), false);
+        $saved = hpv_customer_save_part('footer', 'Chân trang', serialize_blocks($blocks));
+        if (is_wp_error($saved)) { return $saved; }
+    }
+    update_option('hpv_footer_headings_v1', 1, false);
+    return true;
 }

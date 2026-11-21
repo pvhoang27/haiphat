@@ -39,8 +39,14 @@ if ($hpv_fixture_action === 'install') {
     sort($published_ids); sort($expected_ids);
     hpv_deploy_assert($published_ids === $expected_ids && get_post_field('post_content', $original_id) === 'Nội dung sản phẩm thật' && (int) wp_count_posts('hpv_request')->private === 1, 'Release preserves original product content and private requests, adding only the seven requested products');
     foreach ($product_ids as $id) {
-        hpv_deploy_assert(get_post_type($id) === 'hpv_product' && strpos(get_permalink($id), '/san-pham/') !== false, 'Requested product belongs to Products with a product URL');
+        hpv_deploy_assert(get_post_type($id) === 'hpv_product' && get_permalink($id) === home_url('/' . get_post_field('post_name', $id) . '/'), 'Requested product belongs to Products with a root URL');
     }
+    $footer_source = get_block_template(get_stylesheet() . '//footer', 'wp_template_part')->content;
+    hpv_deploy_assert(strpos($footer_source, '<h2') === false && substr_count($footer_source, '<h3 class="wp-block-heading hpv-footer-product"><a') === 7 && strpos($footer_source, 'hpv-footer-title') !== false, 'Footer titles are not headings and products are H3');
+    $locations = get_nav_menu_locations();
+    $menu_items = empty($locations['primary']) ? array() : wp_get_nav_menu_items($locations['primary']);
+    $menu_products = array_filter((array) $menu_items, static function ($item) { return $item->object === 'hpv_product'; });
+    hpv_deploy_assert(count($menu_products) === count($published_ids), 'Appearance → Menus lists every published product under the primary menu');
     hpv_deploy_assert(get_post_field('post_name', $structure['pages']['chinh-sach-bao-mat']) === 'chinh-sach-bao-mat', 'Privacy page uses the canonical slug');
     $navigation = get_post_field('post_content', $structure['navigation']);
     $footer = get_block_template(get_stylesheet() . '//footer', 'wp_template_part');

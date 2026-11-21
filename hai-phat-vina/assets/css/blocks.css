@@ -530,3 +530,13 @@ body.page .hpv-full-width-page:has(.hpv-contact-page) .hpv-full-width-title h1 {
   .wp-site-blocks .hpv-header-inner { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; }
   .wp-site-blocks .hpv-header-inner > .wp-block-navigation { margin-left: 0; justify-self: center; }
 }
+
+/* Footer column titles are plain paragraphs and product links are H3 (SEO request); both keep the earlier look. */
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-site-footer .hpv-footer-grid p.hpv-footer-title { order: 0; color: #fff; font-family: var(--wp--preset--font-family--be-vietnam-pro); font-size: 16px; font-weight: 600; line-height: 1.5; letter-spacing: 0; margin: 0 0 24px; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-site-footer .hpv-footer-grid .hpv-footer-links > .wp-block-heading.hpv-footer-product { margin: 0; color: inherit; font-size: 13px; font-weight: 400; line-height: 1.75; letter-spacing: 0; }
+:where(.wp-site-blocks, .editor-styles-wrapper) .hpv-site-footer .hpv-footer-links > * + * { margin-top: 0; }
+@media (max-width: 480px) {
+  :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-site-footer .hpv-footer-grid p.hpv-footer-title { font-size: 15px; margin-bottom: 16px; }
+  :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-site-footer .hpv-footer-grid > .wp-block-column:nth-child(2) > .hpv-footer-title,
+  :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-site-footer .hpv-footer-grid > .wp-block-column:nth-child(3) > .hpv-footer-title { min-height: 45px; }
+}

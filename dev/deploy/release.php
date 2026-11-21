@@ -185,6 +185,14 @@ try {
         }
         $corrected = hpv_correct_customer_structure();
         if (is_wp_error($corrected)) { throw new RuntimeException($corrected->get_error_message()); }
+        $admins = get_users(array('role' => 'administrator', 'number' => 1, 'fields' => 'ID'));
+        if (!$admins) { throw new RuntimeException('No administrator exists to update menus and the footer.'); }
+        wp_set_current_user($admins[0]);
+        flush_rewrite_rules();
+        foreach (array('hpv_migrate_product_root_urls', 'hpv_footer_heading_levels', 'hpv_seed_primary_classic_menu') as $step) {
+            $result = $step();
+            if (is_wp_error($result)) { throw new RuntimeException($result->get_error_message()); }
+        }
         $logo = hpv_use_horizontal_logo();
         if (is_wp_error($logo)) { throw new RuntimeException($logo->get_error_message()); }
         update_option('hpv_deployed_revision', $revision, false);
