@@ -149,6 +149,9 @@
 :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-comments .comment-form .submit { width: auto; background: var(--hpv-forest); color: #fff; border: 0; padding: 13px 24px; cursor: pointer; }
 :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-product-detail { gap: clamp(32px, 6vw, 84px); margin-bottom: 56px; }
 :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-product-detail h1 { font-size: clamp(32px, 3.6vw, 48px); }
+/* Products without a featured image render an empty image column; drop it so the summary isn't pushed right. */
+:where(.wp-site-blocks) .hpv-product-detail > .wp-block-column:empty { display: none; }
+:where(.wp-site-blocks) .hpv-product-detail > .wp-block-column:empty + .wp-block-column { max-width: 760px; }
 :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-product-detail .wp-block-post-featured-image { position: sticky; top: 130px; }
 :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-product-specs .hpv-price { font-size: 27px; margin-bottom: 22px; }
 :where(.wp-site-blocks, .editor-styles-wrapper) .hpv-product-detail > .wp-block-column > .hpv-price { font-size: 27px; }
